@@ -23,8 +23,6 @@ let activeCaptchaJob = null;
 /** Prevent double do=solve / second download when tab closes or hook fires twice. */
 const solvedGate = Object.create(null);
 let pipeSession = null;
-/** Avoid infinite fallback if background pipe also fails. */
-let pipeBgFallbackUsed = false;
 /** Last known AnkerGames URL per tab — restore if page navigates to dlproxy. */
 const lastAnkerUrlByTab = Object.create(null);
 
@@ -449,24 +447,6 @@ function sendTabMessage(tabId, msg) {
   });
 }
 
-function pipeCdnViaTab(tabId, cdnUrl, relayBase) {
-  if (tabId == null) {
-    return Promise.reject(new Error("no tab"));
-  }
-  return executeInTab(tabId, { file: "cdn-pipe.js" }).then(function () {
-    return sendTabMessage(tabId, {
-      type: "jdt-pipe-cdn",
-      cdnUrl: cdnUrl,
-      relayBase: relayBase
-    }).then(function (resp) {
-      if (!resp || !resp.ok) {
-        throw new Error((resp && resp.error) || "tab pipe failed");
-      }
-      /* Tab continues streaming; completion arrives as jdt-pipe-done. */
-      return resp;
-    });
-  });
-}
 
 function ensureOffscreenDocument() {
   if (!api.offscreen || !api.offscreen.createDocument) {
@@ -566,7 +546,7 @@ function startCdnPipe(cdnUrl, relayBase, tabId) {
       text: "JD is downloading — closing this tab…"
     }).catch(function () {});
   }
-  /* Offscreen owns the stream; AnkerGames redirect → hold.html looks broken in Vivaldi. */
+  /* Offscreen owns the stream — close AnkerGames UI tabs. */
   dismissPipeUiTabs();
   function okDone() {
     endPipeSession();
@@ -692,7 +672,6 @@ function beginRelayTransfer(opts) {
   }
 
   markSolved(key);
-  pipeBgFallbackUsed = false;
   pipeSession = {
     key: key,
     workTabId: tabId,
@@ -733,7 +712,7 @@ function armDlproxySessionRules() {
   if (!api.declarativeNetRequest || !api.declarativeNetRequest.updateSessionRules) {
     return;
   }
-  /* Block main_frame only — redirect→hold.html is ERR_BLOCKED_BY_CLIENT in Vivaldi. */
+  /* Block main_frame only — never block xmlhttprequest (CDN→relay fetch). */
   api.declarativeNetRequest
     .updateSessionRules({
       removeRuleIds: [9001],
@@ -859,34 +838,27 @@ function installDownloadGuard() {
 }
 installDownloadGuard();
 
-/**
- * If AnkerGames still navigates to dlproxy (or an old hold.html redirect), close the
- * tab while piping — never leave Vivaldi on chrome-extension://…/hold.html.
- */
+/** Close the tab if AnkerGames still navigates to dlproxy while piping. */
 function installDlproxyNavGuard() {
   if (!api.webNavigation || !api.webNavigation.onBeforeNavigate) {
     return;
   }
-  const holdPrefix = api.runtime.getURL("hold.html");
   try {
     api.webNavigation.onBeforeNavigate.addListener(function (details) {
       if (!details || details.frameId !== 0) {
         return;
       }
       const url = details.url || "";
-      const toDlproxy = DLPROXY_RE.test(url);
-      const toHold = url.indexOf(holdPrefix) === 0;
-      if (!toDlproxy && !toHold) {
+      if (!DLPROXY_RE.test(url)) {
         return;
       }
       if (pipeSession) {
-        console.warn("[JD Turnstile] closing redirect tab", url.slice(0, 80));
+        console.warn("[JD Turnstile] closing dlproxy tab", url.slice(0, 80));
         api.tabs.remove(details.tabId).catch(function () {});
         return;
       }
       const back = lastAnkerUrlByTab[details.tabId];
       if (back) {
-        console.warn("[JD Turnstile] bounce dlproxy → AnkerGames");
         api.tabs.update(details.tabId, { url: back }).catch(function () {});
       } else {
         api.tabs.remove(details.tabId).catch(function () {});
@@ -917,103 +889,9 @@ api.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   injectSolver(tabId, job).catch(console.error);
 });
 
-function handleRelayStart(msg) {
-  const push = relayPushUrl(msg.relayBase || (pipeSession && pipeSession.relayBase) || "");
-  return signalRelayStart(push, msg.headers || {})
-    .then(function () {
-      return { ok: true };
-    })
-    .catch(function (err) {
-      return { ok: false, error: String(err && err.message ? err.message : err) };
-    });
-}
-
-function handleRelayChunk(msg) {
-  const push = relayPushUrl(msg.relayBase || (pipeSession && pipeSession.relayBase) || "");
-  var bytes;
-  if (msg.chunk instanceof ArrayBuffer) {
-    bytes = new Uint8Array(msg.chunk);
-  } else if (msg.chunk && msg.chunk.buffer) {
-    bytes = new Uint8Array(msg.chunk.buffer, msg.chunk.byteOffset || 0, msg.chunk.byteLength);
-  } else {
-    return Promise.resolve({ ok: false, error: "missing chunk" });
-  }
-  return pushRelayChunk(push, bytes)
-    .then(function () {
-      return { ok: true };
-    })
-    .catch(function (err) {
-      return { ok: false, error: String(err && err.message ? err.message : err) };
-    });
-}
-
-function handleRelayEnd(msg) {
-  const push = relayPushUrl(msg.relayBase || (pipeSession && pipeSession.relayBase) || "");
-  return signalRelayEnd(push).then(function () {
-    return { ok: true };
-  });
-}
-
-function fallbackPipeFromBackground(cdnUrl, relayBase, tabId) {
-  if (pipeBgFallbackUsed) {
-    console.error("[JD Turnstile] background fallback already used — giving up");
-    return Promise.resolve();
-  }
-  pipeBgFallbackUsed = true;
-  console.warn("[JD Turnstile] tab pipe failed — background fallback");
-  if (tabId != null) {
-    sendTabMessage(tabId, {
-      type: "jdt-status",
-      text: "Retrying stream via background — keep this tab open…"
-    }).catch(function () {});
-  }
-  return pipeCdnViaBackground(cdnUrl, relayBase)
-    .then(function () {
-      if (tabId != null) {
-        sendTabMessage(tabId, {
-          type: "jdt-status",
-          text: "Stream finished — you can close this tab."
-        }).catch(function () {});
-      }
-      closePipeSessionTabs();
-    })
-    .catch(function (err) {
-      console.error("[JD Turnstile] background fallback failed", err);
-      if (tabId != null) {
-        sendTabMessage(tabId, {
-          type: "jdt-status",
-          text: "Pipe failed: " + (err && err.message ? err.message : err)
-        }).catch(function () {});
-      }
-    });
-}
 
 api.runtime.onMessage.addListener(function (msg, sender) {
   if (!msg || !msg.type) {
-    return;
-  }
-  if (msg.type === "jdt-relay-start") {
-    return handleRelayStart(msg);
-  }
-  if (msg.type === "jdt-relay-chunk") {
-    return handleRelayChunk(msg);
-  }
-  if (msg.type === "jdt-relay-end") {
-    return handleRelayEnd(msg);
-  }
-  if (msg.type === "jdt-pipe-done") {
-    console.log("[JD Turnstile] pipe done", msg.ok, msg.error || "");
-    if (msg.ok) {
-      closePipeSessionTabs();
-      return;
-    }
-    const cdnUrl = msg.cdnUrl || (pipeSession && pipeSession.cdnUrl) || "";
-    const relayBase = msg.relayBase || (pipeSession && pipeSession.relayBase) || "";
-    const tabId =
-      (sender.tab && sender.tab.id) || (pipeSession && pipeSession.workTabId) || null;
-    if (cdnUrl && relayBase) {
-      fallbackPipeFromBackground(cdnUrl, relayBase, tabId);
-    }
     return;
   }
   if (msg.type === "jdt-ankergames-page") {

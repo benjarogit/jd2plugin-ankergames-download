@@ -22,6 +22,10 @@
   · <a href="README.md">English</a>
 </p>
 
+<p align="center">
+  <img src="docs/jd-download-ankergames.png" width="720" alt="JDownloader lädt von ankergames.net" />
+</p>
+
 ---
 
 [ankergames.net](https://ankergames.net) steckt hinter Cloudflare. Der Java-Client von JD wird blockiert.  
@@ -39,7 +43,7 @@ Dieses Paket liefert **JD-Plugin** + **Chromium-Companion**: Turnstile im echten
 | 1 | [Dieses ZIP laden](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest/download/ankergames-jd2-full.zip) und entpacken |
 | 2 | JD-Ordner finden → Plugin-Dateien kopieren → `Core.jar` patchen |
 | 3 | Chromium-Companion laden |
-| 4 | Spiel-URL in JD → Captcha lösen → **Tab offen lassen** |
+| 4 | Spiel-URL in JD → Captcha lösen → JD lädt |
 
 In JDownloader denselben Chromium-Browser für Captchas einstellen, in dem der Companion installiert ist (Chrome / Vivaldi / Brave / Edge).
 
@@ -119,7 +123,7 @@ Fertig bei `<JD-Root>/jd/plugins/hoster/AnkergamesNet.class`.
 1. `chrome://extensions` öffnen (oder `vivaldi://extensions` / `brave://extensions` / `edge://extensions`)  
 2. **Entwicklermodus** einschalten  
 3. **Entpackte Erweiterung laden** → Ordner `companion/chromium/` wählen (nicht die ZIP-Wurzel)  
-4. Prüfen: **JD Turnstile Companion** steht in der Liste  
+4. Prüfen: **JD Turnstile Companion** steht in der Liste (Version **1.0.0**)  
 
 Nach Updates: Erweiterungsseite öffnen → Companion neu laden.
 
@@ -131,11 +135,11 @@ Nach Updates: Erweiterungsseite öffnen → Companion neu laden.
 <br/>
 
 1. In JD z. B. `https://ankergames.net/game/…` einfügen  
-2. Download starten → Turnstile im Browser lösen  
-3. AnkerGames-Tab offen lassen, bis JD fertig ist  
+2. Download starten → Turnstile im Browser lösen (oft automatisch)  
+3. Der Companion streamt die CDN-Datei nach JD; der AnkerGames-Tab schließt sich selbst  
 
 ```text
-Turnstile → Companion holt CDN → localhost → JD speichert
+Turnstile → Companion holt CDN → localhost-Relay → JD speichert
 ```
 
 </details>
@@ -150,7 +154,7 @@ Turnstile → Companion holt CDN → localhost → JD speichert
 | Pathfinder leer | Siehe „Nichts gefunden“ oben |
 | Plugin fehlt in JD | Dateien unter `…/jd/plugins/…` + Core-Patch |
 | Companion fehlt | Entpackt laden → Ordner `companion/chromium/` |
-| Browser speichert die ZIP | Companion neu laden · `*.dlproxy.uk` nicht öffnen |
-| JD bei 0 B / Pipe failed | Companion neu laden, Tab offen lassen, erneut versuchen |
+| Browser-Speichern-Dialog | Abbrechen · Companion **1.0.0** neu laden |
+| Pipe failed / 0 B | Companion neu laden · bei Brave Shields auf ankergames.net kurz runter |
 
 </details>

@@ -22,10 +22,14 @@
   · <a href="README.de.md">Deutsch</a>
 </p>
 
+<p align="center">
+  <img src="docs/jd-download-ankergames.png" width="720" alt="JDownloader downloading from ankergames.net" />
+</p>
+
 ---
 
 [ankergames.net](https://ankergames.net) is behind Cloudflare. JD’s Java client gets blocked.  
-This package adds a **JD plugin** + **Chromium companion** so Turnstile runs in a real browser and the file streams to JD.
+This package adds a **JD plugin** + **Chromium companion** so Turnstile runs in a real browser and the file streams to JD over localhost.
 
 > Unofficial — not affiliated with AppWork, JDownloader, or AnkerGames.
 
@@ -39,7 +43,7 @@ This package adds a **JD plugin** + **Chromium companion** so Turnstile runs in 
 | 1 | [Download this ZIP](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest/download/ankergames-jd2-full.zip) and unpack |
 | 2 | Find JD folder → copy plugin files → patch `Core.jar` |
 | 3 | Load the Chromium companion |
-| 4 | Paste game URL in JD → solve captcha → **keep the tab open** |
+| 4 | Paste game URL in JD → solve captcha → JD downloads |
 
 Set JDownloader’s captcha browser to the same Chromium browser you install the companion in (Chrome / Vivaldi / Brave / Edge).
 
@@ -119,7 +123,7 @@ Done when `<JD-Root>/jd/plugins/hoster/AnkergamesNet.class` exists.
 1. Open `chrome://extensions` (or `vivaldi://extensions` / `brave://extensions` / `edge://extensions`)  
 2. Turn **Developer mode** ON  
 3. **Load unpacked** → select the folder `companion/chromium/` (not the ZIP root)  
-4. Confirm **JD Turnstile Companion** is listed  
+4. Confirm **JD Turnstile Companion** is listed (version **1.0.0**)  
 
 After updates: open the extensions page → reload the companion.
 
@@ -131,11 +135,11 @@ After updates: open the extensions page → reload the companion.
 <br/>
 
 1. Add e.g. `https://ankergames.net/game/…` in JD  
-2. Start download → solve Turnstile in the browser  
-3. Keep the AnkerGames tab open until JD finishes  
+2. Start download → solve Turnstile in the browser (often automatic)  
+3. The companion streams the CDN file into JD; the AnkerGames tab closes on its own  
 
 ```text
-Turnstile → companion fetches CDN → localhost → JD saves file
+Turnstile → companion fetches CDN → localhost relay → JD saves the file
 ```
 
 </details>
@@ -150,7 +154,7 @@ Turnstile → companion fetches CDN → localhost → JD saves file
 | Pathfinder empty | See “Nothing found” above |
 | Plugin missing in JD | Files under `…/jd/plugins/…` + Core patch |
 | Companion missing | Load unpacked → folder `companion/chromium/` |
-| Browser saves the ZIP | Reload companion · don’t open `*.dlproxy.uk` |
-| JD at 0 B / Pipe failed | Reload companion, keep tab open, try again |
+| Browser Save dialog | Cancel it · reload companion **1.0.0** |
+| Pipe failed / 0 B | Reload companion · temporarily lower Brave Shields on ankergames.net |
 
 </details>

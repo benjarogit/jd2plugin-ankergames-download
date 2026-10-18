@@ -1,15 +1,18 @@
 # Local JD / build noise
 *.class
+!plugin/plugins/**/*.class
+!core-patch/*.class
 *.jar~
 .DS_Store
 Thumbs.db
-
-# Keep chromium.pem in repo for stable CRX id (self-distributed companion).
-# Do not reuse this key for unrelated extensions.
 __pycache__/
 *.pyc
 .amo-upload-uuid
 web-ext-artifacts/
+companion/chromium/_metadata/
 companion/dist/signed/
 companion/dist/*firefox*
-companion/dist/signed/
+companion/firefox/
+
+# Keep chromium.pem in repo for stable CRX id (self-distributed companion).
+# Do not reuse this key for unrelated extensions.
