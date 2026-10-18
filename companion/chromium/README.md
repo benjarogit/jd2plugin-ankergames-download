@@ -1,13 +1,18 @@
-# JD Turnstile Companion (Chromium / Vivaldi)
+# JD Turnstile Companion — Chromium family
 
-Unpacked MV3 extension for Chrome, Edge, Brave, and Vivaldi.
+Installable **`.crx`** for **Chrome, Chromium, Vivaldi, Brave, Edge** (not “Load unpacked”).
 
-1. Open `chrome://extensions` or `vivaldi://extensions`
-2. Enable Developer mode
-3. Load unpacked → select **this folder**
+```bash
+cd companion
+./install-chromium.sh
+# or: ./install.sh → [2]
+```
 
-See the repository root [README.md](../../README.md) for the full architecture.
+- Package: `dist/jd-turnstile-companion-chromium-*.crx`
+- Extension id: `haopihkkdnnohoknooliddghpanmmedj`
+- Auto-update feed: [`updates/chromium.xml`](../../updates/chromium.xml) (GitHub Releases)
+- Fallback: toolbar badge **↑** when a newer release exists
 
-**Version:** see `manifest.json` (1.2.9+).
+Safari: see [`../safari/README.md`](../safari/README.md) (macOS + Apple Developer).
 
-Use the same browser JD opens for captchas. Keep the AnkerGames tab open during the CDN→relay stream.
+See root [README.md](../../README.md) / [README.de.md](../../README.de.md).

@@ -1,0 +1,84 @@
+name: Companion release feeds
+
+# After publishing a GitHub Release that contains the companion assets,
+# refresh updates/chromium.xml and updates/firefox.json on main so browsers
+# can auto-update.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.4.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-feeds:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve tag + version
+        id: ver
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          TAG="${TAG#v}"
+          TAG_FULL="v${TAG}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "tag_full=${TAG_FULL}" >> "$GITHUB_OUTPUT"
+          EXT_ID="$(tr -d '[:space:]' < companion/signing/chromium-extension-id.txt)"
+          echo "ext_id=${EXT_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Write update feeds
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.ver.outputs.tag }}"
+          TAG_FULL="${{ steps.ver.outputs.tag_full }}"
+          EXT_ID="${{ steps.ver.outputs.ext_id }}"
+          BASE="https://github.com/${{ github.repository }}/releases/download/${TAG_FULL}"
+          mkdir -p updates
+          cat > updates/chromium.xml <<EOF
+          <?xml version='1.0' encoding='UTF-8'?>
+          <gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
+            <app appid='${EXT_ID}'>
+              <updatecheck
+                codebase='${BASE}/jd-turnstile-companion-chromium-${TAG}.crx'
+                version='${TAG}' />
+            </app>
+          </gupdate>
+          EOF
+          # Strip leading indent from heredoc
+          sed -i 's/^          //' updates/chromium.xml
+          python3 - <<PY
+          import json
+          data = {
+            "addons": {
+              "jd-turnstile-companion@benjarogit.github.io": {
+                "updates": [{
+                  "version": "${TAG}",
+                  "update_link": "${BASE}/jd-turnstile-companion-firefox-${TAG}.xpi"
+                }]
+              }
+            }
+          }
+          open("updates/firefox.json","w").write(json.dumps(data, indent=2) + "\n")
+          PY
+
+      - name: Commit feeds
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add updates/chromium.xml updates/firefox.json
+          if git diff --staged --quiet; then
+            echo "No feed changes"
+            exit 0
+          fi
+          git commit -m "chore: refresh companion update feeds for ${{ steps.ver.outputs.tag_full }}"
+          git push

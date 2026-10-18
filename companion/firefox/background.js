@@ -804,6 +804,17 @@ api.runtime.onMessage.addListener(function (msg, sender) {
 });
 
 function onActionClicked(tab) {
+  if (typeof self.jdtOpenUpdateIfAny === "function") {
+    Promise.resolve(self.jdtOpenUpdateIfAny()).then(function (opened) {
+      if (opened) return;
+      onActionClickedCore(tab);
+    });
+    return;
+  }
+  onActionClickedCore(tab);
+}
+
+function onActionClickedCore(tab) {
   if (!tab || tab.id == null) {
     return;
   }

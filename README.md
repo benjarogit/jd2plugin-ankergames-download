@@ -1,147 +1,176 @@
 # AnkerGames for JDownloader 2
 
-Unofficial **JDownloader 2** hoster/crawler plugin plus a **real browser add-on** (`.xpi` / `.crx`) so downloads from [ankergames.net](https://ankergames.net) work despite Cloudflare.
+[English](#english) · [Deutsch](README.de.md)
 
-> Not affiliated with AppWork / JDownloader. Official support declined this hoster because Cloudflare blocks JDownloader’s Java HTTP client.
+Unofficial **JDownloader 2** hoster/crawler plugin + **real browser extensions** (`.crx` / `.xpi`) so [ankergames.net](https://ankergames.net) downloads work despite Cloudflare.
 
-## Why a companion is required
+> Not affiliated with AppWork / JDownloader. Official support declined this hoster because Cloudflare blocks JD’s Java HTTP client.
 
-Cloudflare compares **TLS fingerprints (JA3/JA4)** with the claimed User-Agent. JDownloader speaks **Java TLS** while advertising a Firefox UA → bot score → block. Even a freshly generated CDN link (`*.dlproxy.uk`) fails when opened by Java.
+[![Release](https://img.shields.io/github/v/release/benjarogit/jd2plugin-ankergames-download?label=release)](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest)
+[![License](https://img.shields.io/badge/license-as--is-lightgrey)](#license)
 
-So:
+---
 
-| Who | What Cloudflare / AnkerGames see |
-|-----|----------------------------------|
-| Browser (+ companion) | Real Firefox/Chrome/Vivaldi TLS + Turnstile session |
-| JDownloader | Only `http://127.0.0.1:<port>/file` (localhost relay) |
+<a id="english"></a>
 
-**Human-in-the-loop:** you solve Cloudflare Turnstile in a real browser. The companion then streams the CDN file into a localhost relay; JD manages progress, path, and the download list as usual.
+## English
+
+### What you get
+
+| Piece | Role |
+|-------|------|
+| **JD plugin** | Detects AnkerGames links, opens Turnstile HITL, downloads via localhost relay |
+| **Browser companion** | Real add-on in your browser — solves Turnstile, fetches CDN with **browser TLS**, pipes bytes to JD |
+| **Core patch** | Adds relay metadata to JD’s Turnstile captcha page |
+
+### Supported browsers
+
+| Browser | Package | Auto-update via GitHub |
+|---------|---------|------------------------|
+| **Chrome / Chromium** | `.crx` + policy | Yes — `updates/chromium.xml` |
+| **Vivaldi** | `.crx` + policy | Yes |
+| **Brave** | `.crx` + policy | Yes |
+| **Edge** | `.crx` + policy | Yes |
+| **Firefox** | `.xpi` | Yes **if Mozilla-signed** — `updates/firefox.json`; otherwise badge **↑** |
+| **Safari** | Safari Web Extension (build on macOS) | No CRX feed — see [`companion/safari/README.md`](companion/safari/README.md) |
+
+All companions also poll the **GitHub Releases API** and show a toolbar badge **↑** when a newer version exists (opens the release page).
+
+### How it works
+
+Cloudflare compares **TLS fingerprints (JA3/JA4)** with the User-Agent. JDownloader speaks **Java TLS** while advertising a browser UA → blocked. A CDN URL from AnkerGames (`*.dlproxy.uk`) still fails if Java fetches it.
 
 ```
-AnkerGames / Cloudflare          Your browser                 JDownloader
-─────────────────────          ─────────────────            ──────────────
-Turnstile (HITL)  ───────────►  Companion solves
-CDN URL (signed)  ───────────►  fetch(CDN) [browser TLS]
-                                POST chunks ───────────────►  localhost /push
-                                (tab stays open)              GET /file
-                                                              → silver-pines.zip
+┌─────────────────┐     Turnstile HITL      ┌──────────────────┐
+│  ankergames.net │ ◄─────────────────────► │ Your browser     │
+│  + Cloudflare   │     real browser TLS    │ + Companion      │
+└────────┬────────┘                         └────────┬─────────┘
+         │ CDN URL (signed)                          │ fetch(CDN)
+         │                                           │ POST chunks
+         │                                  ┌────────▼─────────┐
+         │                                  │ 127.0.0.1 relay  │
+         │                                  │ AnkergamesCdnRelay│
+         │                                  └────────┬─────────┘
+         │                                           │ GET /file
+         │                                  ┌────────▼─────────┐
+         └──────────────────────────────────│  JDownloader     │
+                                            │  (progress/path) │
+                                            └──────────────────┘
 ```
 
-## Package contents
+1. You add a game URL in JD Linkgrabber.  
+2. JD opens a local Turnstile page → companion opens the game tab.  
+3. **You** solve Cloudflare Turnstile once.  
+4. Companion receives the CDN URL, blocks tab navigation to it (so the browser does not “Save as…”), and streams the file into a localhost relay.  
+5. JD downloads from `http://127.0.0.1:<port>/file` as a normal list entry.
 
-| Path | Purpose |
-|------|---------|
-| `plugin/` | JD hoster + crawler + `AnkergamesCdnRelay` + installers |
-| `companion/firefox/` | Firefox source → built as **`.xpi`** |
-| `companion/chromium/` | Chromium source → built as **`.crx` / `.zip`** |
-| `companion/dist/` | Ready-to-install packages (versioned) |
-| `companion/install.sh` | One-shot companion installer |
-| `core-patch/` | Patched Turnstile captcha HTML + class (relay metas) for `Core.jar` |
-| `src/` | Java / HTML sources for transparency |
+**Keep the AnkerGames tab open** until the stream finishes.
 
-## Requirements
+### Requirements
 
-- JDownloader 2 (local install with `JDownloader.jar` + `Core.jar`)
-- One desktop browser: Firefox **or** Chromium (Chrome / Edge / Brave / **Vivaldi**)
-- Companion installed in the **same** browser JD opens for captchas
+- JDownloader 2 (`JDownloader.jar` + `Core.jar`)
+- One supported desktop browser (same one JD uses for captchas)
+- Linux / macOS / Windows for the plugin installer; companion scripts are bash (WSL/Git Bash on Windows, or install `.crx`/`.xpi` from Releases manually)
 
-## Install
+### Installation
 
-### 1) Plugin + Core patch (Linux / macOS)
+#### 1) JDownloader plugin + Core patch
 
 ```bash
-cd plugin
+git clone https://github.com/benjarogit/jd2plugin-ankergames-download.git
+cd jd2plugin-ankergames-download/plugin
 chmod +x install.sh
 ./install.sh
 ```
 
-The installer stops JD, copies plugin classes (including `AnkergamesCdnRelay`), patches `Core.jar` with `../core-patch/`, clears plugin caches, and starts JD again.
+Windows: `install.bat` or `install.ps1`.
 
-Windows: run `install.bat` or `install.ps1` from `plugin/`.
-
-If JD is not auto-detected:
+Custom JD path:
 
 ```bash
-JD_HOME="/path/to/your/jdownloader" ./install.sh
+JD_HOME="/path/to/jdownloader" ./install.sh
 ```
 
-### 2) Browser companion (real add-on — no “Load unpacked”)
+#### 2) Browser companion (real add-on)
 
 ```bash
-cd companion
+cd ../companion
 chmod +x install.sh
 ./install.sh
 ```
 
-That builds packages into `companion/dist/` and installs them:
+Choose **[2]** for Chrome/Vivaldi/Brave/Edge, **[1]** for Firefox, or **[3]** for both.
 
-| Browser | What you get | How |
-|---------|--------------|-----|
-| **Vivaldi / Chrome / Edge / Brave** | `.crx` + managed policy (`ExtensionInstallForcelist`) | Restart the browser once, or drag `companion.crx` onto `…://extensions` |
-| **Firefox** | `.xpi` file install | Confirm the install prompt, or *about:addons → gear → Install Add-on From File…* |
+**Or install from [Releases](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest):**
 
-Prebuilt artifacts (also on [GitHub Releases](https://github.com/benjarogit/jd2plugin-ankergames-download/releases)):
-
-- `companion/dist/jd-turnstile-companion-chromium-1.3.0.crx`
-- `companion/dist/jd-turnstile-companion-firefox-1.3.0.xpi`
+| Browser | File | Action |
+|---------|------|--------|
+| Chromium family | `jd-turnstile-companion-chromium-*.crx` | `…://extensions` → Developer mode → drag the `.crx` onto the page → restart once |
+| Firefox | `jd-turnstile-companion-firefox-*.xpi` | `about:addons` → gear → *Install Add-on From File…* |
 
 Stable Chromium extension id: `haopihkkdnnohoknooliddghpanmmedj`
 
-**Firefox signing note:** Release Firefox only accepts Mozilla-signed XPIs. The shipped XPI works immediately in **Firefox Developer Edition / Nightly** (`xpinstall.signatures.required` = `false`), or after AMO unlisted signing — see [`companion/SIGNING.md`](companion/SIGNING.md). Chromium/Vivaldi need no AMO account.
+**Firefox signing:** Release Firefox rejects unsigned XPIs. Use [Firefox Developer Edition](https://www.mozilla.org/firefox/developer/) (`xpinstall.signatures.required` = `false`) or sign via AMO — see [`companion/SIGNING.md`](companion/SIGNING.md).
 
-Confirm companion version **1.3.0+** under the browser’s extensions page.
+**Safari:** build on a Mac with Xcode — [`companion/safari/README.md`](companion/safari/README.md).
 
-## Usage
+Confirm companion version **1.4.0+** on the extensions page.
 
-1. Add a game URL in Linkgrabber, e.g.  
-   `https://ankergames.net/game/silver-pines`
-2. Optional: Accounts → add **ankergames** (site signup happens on the website)
-3. Start the download → solve Turnstile in the browser when prompted
-4. Leave the **AnkerGames tab open** until the overlay shows the stream is finished (or the JD download completes). Closing it aborts the CDN→relay pipe.
-5. Progress appears in JD (localhost relay), not as a normal browser file download
+### Updates — automatic or not?
 
-## Important behaviour
+| Channel | Automatic? | Mechanism |
+|---------|------------|-----------|
+| Chrome / Vivaldi / Brave / Edge | **Yes** | Native `update_url` → [`updates/chromium.xml`](updates/chromium.xml) → GitHub Release `.crx` |
+| Firefox (signed) | **Yes** | `gecko.update_url` → [`updates/firefox.json`](updates/firefox.json) → Release `.xpi` |
+| Firefox (unsigned / Dev Edition) | Badge only | Toolbar **↑** → open Release page → reinstall XPI |
+| Safari | Manual / App Store | No GitHub CRX feed |
+| All browsers | Badge fallback | Polls GitHub Releases API every few hours |
 
-- **Do not** click “Überspringen” / Skip on the captcha dialog while the companion is working.
-- **Do not** expect JD to download `dlproxy.uk` directly — the plugin refuses that path on purpose.
-- The companion blocks navigating the CDN URL in a tab (that would trigger a browser download). Bytes go only through the relay.
-- After a successful solve, a second captcha for the same download is suppressed (avoids double starts if a tab is closed mid-stream).
+When we publish a new Release, a GitHub Action refreshes the update feeds on `main`.
 
-## Troubleshooting
+### Usage
 
-| Symptom | Likely cause | Fix |
-|---------|--------------|-----|
-| Captcha closes with no download | Companion not installed / wrong browser | Run `companion/install.sh`; use the captcha browser |
-| Firefox rejects XPI as unverified | Unsigned release XPI | Dev Edition, or sign via `SIGNING.md` |
-| Browser download of the ZIP | Old companion / CDN tab opened | Use 1.3.0+; never open the CDN URL manually |
-| JD stuck at 0 B | Work tab closed during stream | Keep AnkerGames tab open; restart download |
-| “Companion must stream via relay” | `do=solve` without `via=relay` | Update companion; ensure Core patch applied |
-| Cloudflare / empty HTML from CDN | Java or non-browser fetch | Only tab/background browser fetch is supported |
+1. Linkgrabber → add e.g. `https://ankergames.net/game/silver-pines`  
+2. Optional: Accounts → **ankergames**  
+3. Start download → solve Turnstile in the browser  
+4. Leave the game tab open until JD finishes  
+5. Progress lives in JD, not as a normal browser download
 
-## Building from source (developers)
+### Important
 
-Against a local JD install (`JD_HOME=~/.jd`):
+- Do **not** click Skip on the captcha while the companion is working.  
+- Do **not** open `*.dlproxy.uk` manually — the plugin refuses Java→CDN on purpose.  
+- Use the **same** browser for captchas and the companion.
 
-```bash
-# from the upstream jdownloader workspace that contains trunk/ + build-plugin-package.sh
-JD_HOME="$HOME/.jd" ./build-plugin-package.sh
+### Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| Captcha closes, no download | Companion missing / wrong browser → reinstall 1.4.0+ |
+| Firefox “could not be verified” | Sign XPI or use Developer Edition — `SIGNING.md` |
+| Browser downloads the ZIP itself | Old companion → update; never open CDN URL |
+| JD stuck at 0 B | Keep AnkerGames tab open; restart download |
+| No auto-update | Check feed URLs / Release assets; use badge **↑** |
+
+### Package layout
+
+```
+plugin/          JD classes + installers
+companion/
+  chromium/      MV3 source → .crx
+  firefox/       MV2 source → .xpi
+  safari/        conversion notes (macOS)
+  dist/          built packages
+  install.sh     one-shot installer
+core-patch/      Turnstile HTML + class for Core.jar
+updates/         GitHub auto-update feeds
+src/             readable sources
 ```
 
-Companion packages only:
+### Legal
 
-```bash
-cd companion
-./build-packages.sh   # → dist/*.xpi + *.crx + *.zip
-./install-firefox.sh
-./install-chromium.sh
-```
+Personal use / research (HITL captcha + browser TLS bridging). Respect ankergames.net terms and local law. Do not redistribute copyrighted game files.
 
-## Legal / ethics
+### License
 
-- For personal use and research (e.g. HITL captcha + browser TLS bridging).
-- Respect ankergames.net terms and local law.
-- Do not use this to bypass paywalls or redistribute copyrighted game files.
-
-## License
-
-Plugin and companion code in this repository: provided as-is for interoperability with JDownloader’s local plugin API. JDownloader itself remains under AppWork’s license. AnkerGames / Cloudflare trademarks belong to their owners.
+Code in this repository: as-is for local JD plugin interoperability. JDownloader remains under AppWork’s license. AnkerGames / Cloudflare trademarks belong to their owners.

@@ -1,0 +1,12 @@
+{
+  "addons": {
+    "jd-turnstile-companion@benjarogit.github.io": {
+      "updates": [
+        {
+          "version": "1.4.0",
+          "update_link": "https://github.com/benjarogit/jd2plugin-ankergames-download/releases/download/v1.4.0/jd-turnstile-companion-firefox-1.4.0.xpi"
+        }
+      ]
+    }
+  }
+}

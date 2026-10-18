@@ -1,11 +1,27 @@
-# Signing the Firefox companion (AMO)
+# Signing & updates
 
-Release Firefox only installs **Mozilla-signed** XPIs. Chromium/Vivaldi use the `.crx` + policy installer and do not need AMO.
+## Chromium / Chrome / Vivaldi / Brave / Edge
 
-## One-time: AMO API credentials
+No store account required for self-distribution.
 
-1. Create / log into https://addons.mozilla.org  
-2. https://addons.mozilla.org/developers/addon/api/key/ → generate JWT  
+1. Build `.crx` with the stable key in `signing/chromium.pem` (keeps id `haopihkkdnnohoknooliddghpanmmedj`).
+2. Attach the CRX to a GitHub Release.
+3. Point `updates/chromium.xml` at that asset (done automatically by `.github/workflows/companion-release.yml`).
+
+Browsers poll:
+
+`https://raw.githubusercontent.com/benjarogit/jd2plugin-ankergames-download/main/updates/chromium.xml`
+
+The extension also checks the GitHub Releases API every few hours and shows a toolbar badge **↑** if a newer version exists.
+
+## Firefox (AMO)
+
+Release Firefox only installs / auto-updates **Mozilla-signed** XPIs.
+
+### One-time: AMO API credentials
+
+1. https://addons.mozilla.org → developer hub  
+2. https://addons.mozilla.org/developers/addon/api/key/ → JWT  
 3. Export:
 
 ```bash
@@ -13,7 +29,7 @@ export AMO_JWT_ISSUER="user:xxxxxxxx:xxx"
 export AMO_JWT_SECRET="your-secret"
 ```
 
-## Sign (unlisted — self-distribution on GitHub Releases)
+### Sign (unlisted — GitHub self-distribution)
 
 ```bash
 cd companion
@@ -26,16 +42,15 @@ npx --yes web-ext sign \
   --artifacts-dir dist
 ```
 
-Replace `dist/jd-turnstile-companion-firefox-*.xpi` with the signed file from web-ext, then:
+Replace the unsigned XPI in the Release with the signed file. Firefox then polls:
 
-```bash
-./install-firefox.sh
-# or attach the signed XPI to a GitHub Release
-```
+`https://raw.githubusercontent.com/benjarogit/jd2plugin-ankergames-download/main/updates/firefox.json`
 
-Listed (AMO public page) uses `--channel listed` after filling the AMO listing.
+### Without signing
 
-## Without signing
+- **Firefox Developer Edition / Nightly**: `about:config` → `xpinstall.signatures.required` = `false`, then install the XPI.  
+- Native `update_url` will not apply on Release Firefox for unsigned builds; the **↑** badge still opens the GitHub Release page.
 
-- **Firefox Developer Edition / Nightly**: `about:config` → `xpinstall.signatures.required` = `false`, then install the unsigned XPI via *Install Add-on From File*.  
-- **Chromium / Vivaldi**: use `./install-chromium.sh` (no AMO needed).
+## Safari
+
+No GitHub CRX/XPI feed. Distribute via notarized macOS app / App Store. See `safari/README.md`.

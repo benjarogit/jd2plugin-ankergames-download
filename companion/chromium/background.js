@@ -1,5 +1,12 @@
 "use strict";
 
+/* MV3 service worker: load GitHub update badge helper first. */
+try {
+  importScripts("update-check.js");
+} catch (e) {
+  console.warn("[JD Turnstile] update-check.js not loaded", e);
+}
+
 /**
  * Cross-browser API (Firefox MV2 `browser`, Chromium MV3 `chrome`).
  * CDN download must use the real browser stack so AnkerGames/Cloudflare
@@ -804,6 +811,17 @@ api.runtime.onMessage.addListener(function (msg, sender) {
 });
 
 function onActionClicked(tab) {
+  if (typeof self.jdtOpenUpdateIfAny === "function") {
+    Promise.resolve(self.jdtOpenUpdateIfAny()).then(function (opened) {
+      if (opened) return;
+      onActionClickedCore(tab);
+    });
+    return;
+  }
+  onActionClickedCore(tab);
+}
+
+function onActionClickedCore(tab) {
   if (!tab || tab.id == null) {
     return;
   }

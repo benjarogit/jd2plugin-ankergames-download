@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Chromium / Chrome / Edge / Brave / Vivaldi auto-update feed.
+  Browsers poll this URL when the extension is installed with update_url
+  or via ExtensionInstallForcelist pointing here.
+  Update this file (version + codebase) whenever a new companion release ships.
+-->
+<gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
+  <app appid='haopihkkdnnohoknooliddghpanmmedj'>
+    <updatecheck
+      codebase='https://github.com/benjarogit/jd2plugin-ankergames-download/releases/download/v1.4.0/jd-turnstile-companion-chromium-1.4.0.crx'
+      version='1.4.0' />
+  </app>
+</gupdate>
