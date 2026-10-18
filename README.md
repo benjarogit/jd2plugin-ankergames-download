@@ -1,6 +1,6 @@
 # AnkerGames for JDownloader 2
 
-Unofficial **JDownloader 2** hoster/crawler plugin plus a **browser companion** so downloads from [ankergames.net](https://ankergames.net) work despite Cloudflare.
+Unofficial **JDownloader 2** hoster/crawler plugin plus a **real browser add-on** (`.xpi` / `.crx`) so downloads from [ankergames.net](https://ankergames.net) work despite Cloudflare.
 
 > Not affiliated with AppWork / JDownloader. Official support declined this hoster because Cloudflare blocks JDownloader’s Java HTTP client.
 
@@ -32,16 +32,18 @@ CDN URL (signed)  ───────────►  fetch(CDN) [browser TLS]
 | Path | Purpose |
 |------|---------|
 | `plugin/` | JD hoster + crawler + `AnkergamesCdnRelay` + installers |
-| `companion/firefox/` | Firefox MV2 temporary add-on |
-| `companion/chromium/` | Chrome / Edge / Brave / **Vivaldi** MV3 unpacked extension |
+| `companion/firefox/` | Firefox source → built as **`.xpi`** |
+| `companion/chromium/` | Chromium source → built as **`.crx` / `.zip`** |
+| `companion/dist/` | Ready-to-install packages (versioned) |
+| `companion/install.sh` | One-shot companion installer |
 | `core-patch/` | Patched Turnstile captcha HTML + class (relay metas) for `Core.jar` |
 | `src/` | Java / HTML sources for transparency |
 
 ## Requirements
 
 - JDownloader 2 (local install with `JDownloader.jar` + `Core.jar`)
-- One desktop browser: Firefox **or** a Chromium browser (Chrome / Edge / Brave / Vivaldi)
-- Companion loaded in the **same** browser JD opens for captchas
+- One desktop browser: Firefox **or** Chromium (Chrome / Edge / Brave / **Vivaldi**)
+- Companion installed in the **same** browser JD opens for captchas
 
 ## Install
 
@@ -63,24 +65,31 @@ If JD is not auto-detected:
 JD_HOME="/path/to/your/jdownloader" ./install.sh
 ```
 
-### 2) Browser companion (required)
+### 2) Browser companion (real add-on — no “Load unpacked”)
 
-**Firefox**
+```bash
+cd companion
+chmod +x install.sh
+./install.sh
+```
 
-1. Open `about:debugging#/runtime/this-firefox`
-2. Temporary Add-on → select  
-   `companion/firefox/manifest.json`
-3. Confirm version **1.2.9+**
+That builds packages into `companion/dist/` and installs them:
 
-**Chrome / Edge / Brave / Vivaldi**
+| Browser | What you get | How |
+|---------|--------------|-----|
+| **Vivaldi / Chrome / Edge / Brave** | `.crx` + managed policy (`ExtensionInstallForcelist`) | Restart the browser once, or drag `companion.crx` onto `…://extensions` |
+| **Firefox** | `.xpi` file install | Confirm the install prompt, or *about:addons → gear → Install Add-on From File…* |
 
-1. Open `chrome://extensions` (Vivaldi: `vivaldi://extensions`)
-2. Enable Developer mode
-3. Load unpacked → select folder  
-   `companion/chromium/`
-4. Confirm version **1.2.9+**
+Prebuilt artifacts (also on [GitHub Releases](https://github.com/benjarogit/jd2plugin-ankergames-download/releases)):
 
-Use the **same** browser as JD’s captcha (“Browser öffnen” / auto-open).
+- `companion/dist/jd-turnstile-companion-chromium-1.3.0.crx`
+- `companion/dist/jd-turnstile-companion-firefox-1.3.0.xpi`
+
+Stable Chromium extension id: `haopihkkdnnohoknooliddghpanmmedj`
+
+**Firefox signing note:** Release Firefox only accepts Mozilla-signed XPIs. The shipped XPI works immediately in **Firefox Developer Edition / Nightly** (`xpinstall.signatures.required` = `false`), or after AMO unlisted signing — see [`companion/SIGNING.md`](companion/SIGNING.md). Chromium/Vivaldi need no AMO account.
+
+Confirm companion version **1.3.0+** under the browser’s extensions page.
 
 ## Usage
 
@@ -102,8 +111,9 @@ Use the **same** browser as JD’s captcha (“Browser öffnen” / auto-open).
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Captcha closes with no download | Companion not loaded / wrong browser | Reload companion 1.2.9 in the captcha browser |
-| Browser download of the ZIP | Old companion / CDN tab opened | Use 1.2.9+; never open the CDN URL manually |
+| Captcha closes with no download | Companion not installed / wrong browser | Run `companion/install.sh`; use the captcha browser |
+| Firefox rejects XPI as unverified | Unsigned release XPI | Dev Edition, or sign via `SIGNING.md` |
+| Browser download of the ZIP | Old companion / CDN tab opened | Use 1.3.0+; never open the CDN URL manually |
 | JD stuck at 0 B | Work tab closed during stream | Keep AnkerGames tab open; restart download |
 | “Companion must stream via relay” | `do=solve` without `via=relay` | Update companion; ensure Core patch applied |
 | Cloudflare / empty HTML from CDN | Java or non-browser fetch | Only tab/background browser fetch is supported |
@@ -117,10 +127,13 @@ Against a local JD install (`JD_HOME=~/.jd`):
 JD_HOME="$HOME/.jd" ./build-plugin-package.sh
 ```
 
-Companion:
+Companion packages only:
 
 ```bash
-cd companion/firefox && ./install.sh   # packs XPI + syncs chromium/
+cd companion
+./build-packages.sh   # → dist/*.xpi + *.crx + *.zip
+./install-firefox.sh
+./install-chromium.sh
 ```
 
 ## Legal / ethics

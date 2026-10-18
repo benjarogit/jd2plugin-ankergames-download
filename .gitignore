@@ -1,10 +1,8 @@
-*.xpi
-*.zip
-*.part
-*.log
+# Local JD / build noise
+*.class
+*.jar~
 .DS_Store
-__MACOSX/
-*.class.bak
-.idea/
-*.iml
-node_modules/
+Thumbs.db
+
+# Keep chromium.pem in repo for stable CRX id (self-distributed companion).
+# Do not reuse this key for unrelated extensions.

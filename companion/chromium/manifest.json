@@ -2,12 +2,16 @@
   "manifest_version": 3,
   "name": "JD Turnstile Companion",
   "short_name": "JD Turnstile",
-  "version": "1.2.9",
-  "description": "HITL Turnstile + browser→JD CDN relay for JDownloader (Chrome/Edge/Brave/Vivaldi). Does not modify MyJDownloader.",
-  "author": "Local research companion",
+  "version": "1.3.0",
+  "description": "Solves AnkerGames Cloudflare Turnstile in your browser and streams the CDN file into JDownloader via a localhost relay. Cloudflare sees a real browser; JD manages the download.",
+  "author": "benjarogit",
+  "homepage_url": "https://github.com/benjarogit/jd2plugin-ankergames-download",
   "icons": {
-    "48": "icon48.png"
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyGlphoTee5FuxkNJ2mS78tj9uKSvtzFl6OX0mLXZG8QjhfuW0SIn41dR3hTwoqWGIHsyRS6/ceYgh4SB28XkCut5Ll6yGnGr1g+fJYUJwENqr74XCdQvp/vWP4JR+RG3IzpAzIUrdpJ2ef7UCkST5IvGysNNnzQI+6Lo1OMDyrP0wY3VpoD6R1kvSIA/BWGv/JODWG+CbYR2VE7EFTdbOwPaXU/KtIuR8oHZLhUagKfxfn90Ip+NVLXgSyg6YA874DZymCbV4KcHz8yYl2NQGN6IBDM+zCXmyFAkY+jrWj3gtwf1cFeH8eeImhum/RT2xcD/Ya0HAZB0jVEWx6NCMQIDAQAB",
   "permissions": [
     "tabs",
     "downloads",
@@ -50,7 +54,10 @@
     }
   ],
   "action": {
-    "default_title": "JD Turnstile Companion — click if Waiting…",
-    "default_icon": "icon48.png"
+    "default_title": "JD Turnstile Companion",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
   }
 }
