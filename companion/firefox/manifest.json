@@ -1,0 +1,51 @@
+{
+  "manifest_version": 2,
+  "name": "JD Turnstile Companion",
+  "short_name": "JD Turnstile",
+  "version": "1.2.9",
+  "description": "HITL Turnstile + browser→JD CDN relay for JDownloader (Firefox). Does not modify MyJDownloader.",
+  "author": "Local research companion",
+  "icons": {
+    "48": "icon48.png"
+  },
+  "permissions": [
+    "tabs",
+    "downloads",
+    "webRequest",
+    "webRequestBlocking",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://127.0.0.1/*",
+        "http://localhost/*",
+        "http://[::1]/*"
+      ],
+      "js": ["local-hook.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "*://ankergames.net/*",
+        "*://*.ankergames.net/*"
+      ],
+      "js": ["ankergames-hook.js", "cdn-pipe.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "browser_action": {
+    "default_title": "JD Turnstile Companion — click if Waiting…",
+    "default_icon": "icon48.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "jd-turnstile-companion@local",
+      "strict_min_version": "109.0"
+    }
+  }
+}

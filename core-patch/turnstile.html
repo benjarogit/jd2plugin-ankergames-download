@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>%%%headTitle%%%</title>
+    <meta name="description" content="%%%headDescription%%%">
+    <meta name="viewport" content="width=device-width">
+    <meta name="sitekey" content="%%%sitekey%%%"/>
+    <meta name="challengeType" content="%%%challengeType%%%"/>
+    <meta name="siteDomain" content="%%%siteDomain%%%"/>
+    <meta name="siteUrl" content="%%%siteUrl%%%"/>
+    <meta name="fileToken" content="%%%fileToken%%%"/>
+    <meta name="gameUrl" content="%%%gameUrl%%%"/>
+    <meta name="downloadId" content="%%%downloadId%%%"/>
+    <meta name="relayUrl" content="%%%relayUrl%%%"/>
+    <meta name="challengeId" content="%%%challengeId%%%"/>
+    <meta name="boundToDomain" content="%%%boundToDomain%%%"/>
+    <meta name="sameOrigin" content="%%%sameOrigin%%%"/>
+    <meta name="favIcon" content="%%%favIcon%%%"/>
+    <script src="/resource?browserCaptcha.js"></script>
+    <style>
+        body { margin:0; font-family:system-ui,sans-serif; background:#1b3a41; color:#e8f1f2;
+               min-height:100vh; display:flex; align-items:center; justify-content:center; }
+        .box { background:#24474f; border-radius:12px; padding:28px 32px; max-width:480px; width:90%;
+               text-align:center; box-shadow:0 8px 32px rgba(0,0,0,.35); }
+        h1 { font-size:1.15rem; margin:0 0 8px; color:#eebb1b; }
+        .domain { font-weight:700; margin-bottom:14px; word-break:break-all; }
+        p { margin:0 0 12px; line-height:1.45; opacity:.92; font-size:.95rem; }
+        a { color:#7ec8ff; }
+        .hint { font-size:.82rem; opacity:.75; }
+    </style>
+    <script>
+        window.addEventListener("load", function () {
+            try { if (typeof init === "function") init(document.querySelector(".box")); } catch (e) {}
+        });
+    </script>
+</head>
+<body>
+<div class="box">
+    <h1>%%%captchaHeader%%%</h1>
+    <div class="domain">%%%siteDomain%%%</div>
+    <p>Waiting for JD Turnstile Companion…</p>
+    <p class="hint">Install the companion in <b>this</b> browser (Firefox/Chrome/Edge/Brave). It solves Turnstile, fetches the CDN as the browser, and streams into JDownloader via localhost relay. Toolbar icon if stuck.</p>
+    <p class="hint"><a href="%%%siteUrl%%%" target="_blank" rel="noopener">Open download page manually</a></p>
+</div>
+</body>
+</html>

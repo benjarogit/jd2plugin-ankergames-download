@@ -1,0 +1,10 @@
+*.xpi
+*.zip
+*.part
+*.log
+.DS_Store
+__MACOSX/
+*.class.bak
+.idea/
+*.iml
+node_modules/
