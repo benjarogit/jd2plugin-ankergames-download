@@ -123,15 +123,11 @@ for d in "${found[@]}"; do
     echo "    $d"
     echo "  Plugin-Ordner (hierhin kopieren):"
     echo "    $d/jd/plugins/"
-    echo "  Core.jar patchen:"
-    echo "    $d/Core.jar"
   else
     echo "  JD root (JDownloader.jar + Core.jar):"
     echo "    $d"
     echo "  Plugin folder (copy files here):"
     echo "    $d/jd/plugins/"
-    echo "  Patch Core.jar:"
-    echo "    $d/Core.jar"
   fi
   echo
   i=$((i + 1))
@@ -151,10 +147,10 @@ else
   if [[ "${lang}" == de ]]; then
     echo "Als Nächstes: Plugins manuell nach"
     echo "  ${found[0]}/jd/plugins/"
-    echo "kopieren und Core.jar patchen (siehe README)."
+    echo "kopieren (siehe README)."
   else
     echo "Next: copy plugins manually into"
     echo "  ${found[0]}/jd/plugins/"
-    echo "and patch Core.jar (see README)."
+    echo "(see README)."
   fi
 fi

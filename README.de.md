@@ -43,7 +43,7 @@ Dieses Paket liefert **JD-Plugin** + **Browser-Companion**: Turnstile im echten 
 |:-------:|--------|
 | 0 | Kein JD? → [JDownloader 2 herunterladen](https://jdownloader.org/jdownloader2) |
 | 1 | [Dieses ZIP laden](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest/download/ankergames-jd2-full.zip) und entpacken |
-| 2 | JD-Ordner finden → Plugin-Dateien kopieren → `Core.jar` patchen |
+| 2 | JD-Ordner finden → Plugin-Dateien kopieren (kein `Core.jar`-Patch) |
 | 3 | Chromium-Companion laden |
 | 4 | Spiel-URL in JD → Captcha lösen → JD lädt |
 
@@ -91,9 +91,11 @@ Bei jedem PC anders (Installer vs Portable). Du brauchst den Ordner mit **`JDown
 </details>
 
 <details>
-<summary><b>Plugin + Core-Patch installieren</b></summary>
+<summary><b>Plugin installieren</b></summary>
 
 <br/>
+
+Kein `Core.jar`-Patch — die Turnstile-Seite liegt im Plugin, JD-Updates überschreiben sie nicht.
 
 1. JDownloader komplett beenden  
 2. In deinen Plugin-Ordner kopieren:
@@ -104,16 +106,9 @@ Bei jedem PC anders (Installer vs Portable). Du brauchst den Ordner mit **`JDown
 | `plugin/plugins/decrypter/*` | `<JD-Root>/jd/plugins/decrypter/` |
 | `plugin/plugins/components/*` | `<JD-Root>/jd/plugins/components/` |
 
-Fertig bei `<JD-Root>/jd/plugins/hoster/AnkergamesNet.class`.
+Fertig bei `<JD-Root>/jd/plugins/hoster/AnkergamesNet.class` und `…/components/ankergames-turnstile.html`.
 
-3. **`Core.jar`** im JD-Root (neben `JDownloader.jar`) mit 7-Zip patchen — zuerst Backup:
-
-| In `Core.jar` | Ersetzen durch |
-|---------------|----------------|
-| `…/cloudflareturnstile/turnstile.html` | `core-patch/turnstile.html` |
-| `…/cloudflareturnstile/CloudflareTurnstileChallenge.class` | `core-patch/CloudflareTurnstileChallenge.class` |
-
-4. JDownloader starten  
+3. JDownloader starten  
 
 </details>
 
@@ -154,7 +149,7 @@ Turnstile → Companion holt CDN → localhost-Relay → JD speichert
 | Problem | Lösung |
 |---------|--------|
 | Pathfinder leer | Siehe „Nichts gefunden“ oben |
-| Plugin fehlt in JD | Dateien unter `…/jd/plugins/…` + Core-Patch |
+| Plugin fehlt in JD | Dateien unter `…/jd/plugins/…` (inkl. `components/`) |
 | Companion fehlt | Entpackt laden → Ordner `companion/chromium/` |
 | Browser-Speichern-Dialog | Abbrechen · Companion **1.0.0** neu laden |
 | Pipe failed / 0 B | Companion neu laden · bei Brave Shields auf ankergames.net kurz runter |

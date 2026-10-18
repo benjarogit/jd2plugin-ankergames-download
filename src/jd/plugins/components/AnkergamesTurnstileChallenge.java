@@ -1,4 +1,4 @@
-package org.jdownloader.captcha.v2.challenge.cloudflareturnstile;
+package jd.plugins.components;
 
 import java.awt.Rectangle;
 import java.io.IOException;
@@ -20,20 +20,25 @@ import org.appwork.utils.net.httpserver.requests.GetRequest;
 import org.appwork.utils.net.httpserver.requests.HttpRequest;
 import org.appwork.utils.net.httpserver.responses.HttpResponse;
 import org.jdownloader.captcha.v2.AbstractResponse;
+import org.jdownloader.captcha.v2.challenge.cloudflareturnstile.AbstractCloudflareTurnstileCaptcha;
 import org.jdownloader.captcha.v2.solver.browser.AbstractBrowserChallenge;
 import org.jdownloader.captcha.v2.solver.browser.BrowserReference;
 import org.jdownloader.captcha.v2.solver.browser.BrowserViewport;
 import org.jdownloader.captcha.v2.solver.browser.BrowserWindow;
 import org.jdownloader.gui.translate._GUI;
 
-public abstract class CloudflareTurnstileChallenge extends AbstractBrowserChallenge {
+/**
+ * Plugin-local Turnstile browser challenge. Lives under {@code jd.plugins.components} so JD Core
+ * updates never wipe the AnkerGames meta tags / do=solve hook (no Core.jar patch required).
+ */
+public abstract class AnkergamesTurnstileChallenge extends AbstractBrowserChallenge {
     private final String siteKey;
 
     public String getSiteKey() {
         return siteKey;
     }
 
-    public CloudflareTurnstileChallenge(final Plugin plugin, final String siteKey) throws PluginException {
+    public AnkergamesTurnstileChallenge(final Plugin plugin, final String siteKey) throws PluginException {
         super("cloudflareturnstile", plugin);
         this.siteKey = siteKey;
         if (!AbstractCloudflareTurnstileCaptcha.isValidSiteKey(siteKey)) {
@@ -42,7 +47,7 @@ public abstract class CloudflareTurnstileChallenge extends AbstractBrowserChalle
     }
 
     public static String getChallengeType() {
-        return CloudflareTurnstileChallenge.class.getSimpleName();
+        return AnkergamesTurnstileChallenge.class.getSimpleName();
     }
 
     public String getSiteDomain() {
@@ -59,16 +64,12 @@ public abstract class CloudflareTurnstileChallenge extends AbstractBrowserChalle
         return null;
     }
 
-    /**
-     * Optional hoster-specific token (e.g. AnkerGames /download-file/TOKEN) for the companion
-     * extension to resolve the final CDN URL after Turnstile — without relying on short-lived
-     * signed /download/... pages that expire while the captcha dialog is open.
-     */
+    /** Optional: AnkerGames /download-file/TOKEN for the companion after Turnstile. */
     public String getFileToken() {
         return null;
     }
 
-    /** Optional: stable game page so the companion can mint a fresh /download/ ticket in-browser. */
+    /** Optional: stable game page so the companion can mint a fresh /download/ ticket. */
     public String getGameUrl() {
         return null;
     }
@@ -77,10 +78,7 @@ public abstract class CloudflareTurnstileChallenge extends AbstractBrowserChalle
         return null;
     }
 
-    /**
-     * Optional localhost relay base (e.g. http://127.0.0.1:PORT) so the companion can push CDN
-     * bytes into JDownloader while AnkerGames only sees a browser fetch.
-     */
+    /** Optional localhost relay base (e.g. http://127.0.0.1:PORT). */
     public String getRelayUrl() {
         return null;
     }
@@ -88,7 +86,10 @@ public abstract class CloudflareTurnstileChallenge extends AbstractBrowserChalle
     @Override
     public String getHTML(HttpRequest request, String id) {
         try {
-            final URL url = CloudflareTurnstileChallenge.class.getResource("turnstile.html");
+            final URL url = AnkergamesTurnstileChallenge.class.getResource("ankergames-turnstile.html");
+            if (url == null) {
+                throw new IOException("Missing ankergames-turnstile.html next to AnkergamesTurnstileChallenge.class");
+            }
             String html = IO.readURLToString(url);
             html = html.replace("%%%challengeType%%%", getChallengeType());
             html = html.replace("%%%headTitle%%%", _GUI.T.recaptchav2_head_title());
@@ -117,10 +118,6 @@ public abstract class CloudflareTurnstileChallenge extends AbstractBrowserChalle
         return null;
     }
 
-    /**
-     * Same contract as {@link org.jdownloader.captcha.v2.challenge.hcaptcha.HCaptchaChallenge}: Companion /
-     * BrowserSolver posts {@code do=solve&response=TOKEN}; without this hook the token is ignored.
-     */
     @Override
     public boolean onGetRequest(final BrowserReference brRef, final GetRequest request, final HttpResponse response) throws IOException, RemoteAPIException {
         synchronized (this) {

@@ -29,7 +29,6 @@ import org.appwork.utils.os.CrossSystem;
 import org.appwork.utils.swing.EDTRunner;
 import org.appwork.utils.swing.windowmanager.WindowManager.FrameState;
 import org.jdownloader.captcha.v2.challenge.cloudflareturnstile.AbstractCloudflareTurnstileCaptcha;
-import org.jdownloader.captcha.v2.challenge.cloudflareturnstile.CloudflareTurnstileChallenge;
 import org.jdownloader.plugins.controller.LazyPlugin;
 
 import jd.gui.swing.jdgui.JDGui;
@@ -40,6 +39,7 @@ import jd.http.Browser.BlockedByException;
 import jd.http.Cookies;
 import jd.http.URLConnectionAdapter;
 import jd.plugins.components.AnkergamesCdnRelay;
+import jd.plugins.components.AnkergamesTurnstileChallenge;
 import jd.nutils.encoding.Encoding;
 import jd.parser.Regex;
 import jd.plugins.Account;
@@ -307,7 +307,7 @@ public class AnkergamesNet extends PluginForHost {
                 final String fileTokenFinal = fileToken;
                 final String gameUrlFinal = link.getStringProperty(PROPERTY_GAME_URL);
                 final String downloadIdFinal = link.getStringProperty(PROPERTY_DOWNLOAD_ID);
-                final CloudflareTurnstileChallenge challenge = new CloudflareTurnstileChallenge(this, siteKey) {
+                final AnkergamesTurnstileChallenge challenge = new AnkergamesTurnstileChallenge(this, siteKey) {
                     @Override
                     public String getSiteUrl() {
                         if (StringUtils.isNotEmpty(gameUrlFinal)) {
@@ -316,18 +316,22 @@ public class AnkergamesNet extends PluginForHost {
                         return treasureUrl;
                     }
 
+                    @Override
                     public String getFileToken() {
                         return fileTokenFinal;
                     }
 
+                    @Override
                     public String getGameUrl() {
                         return gameUrlFinal;
                     }
 
+                    @Override
                     public String getDownloadId() {
                         return downloadIdFinal;
                     }
 
+                    @Override
                     public String getRelayUrl() {
                         return relayBase;
                     }

@@ -92,8 +92,6 @@ foreach ($d in $found) {
     Write-Host "    $d"
     Write-Host "  Plugin folder (copy here):"
     Write-Host "    $(Join-Path $d 'jd\plugins\')"
-    Write-Host "  Patch Core.jar:"
-    Write-Host "    $(Join-Path $d 'Core.jar')"
     Write-Host ""
     $i++
 }
