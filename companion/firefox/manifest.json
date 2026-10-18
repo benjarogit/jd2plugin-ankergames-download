@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "JD Turnstile Companion",
   "short_name": "JD Turnstile",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Solves AnkerGames Cloudflare Turnstile in your browser and streams the CDN file into JDownloader via a localhost relay. Cloudflare sees a real browser; JD manages the download.",
   "author": "benjarogit",
   "homepage_url": "https://github.com/benjarogit/jd2plugin-ankergames-download",

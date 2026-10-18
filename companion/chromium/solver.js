@@ -286,7 +286,7 @@
   }
 
   function blockPageCdnNavigation() {
-    /* AnkerGames' own JS navigates to dlproxy after Turnstile — that starts a browser download. */
+    /* AnkerGames navigates to dlproxy after Turnstile — that would leave this tab and abort the CDN pipe. */
     document.addEventListener(
       "click",
       function (e) {
@@ -302,6 +302,42 @@
       var pw = pageWin();
       pw.open = function () {
         return null;
+      };
+      function blockAssign(url) {
+        if (url && /dlproxy\.uk/i.test(String(url))) {
+          console.log("[JD Turnstile] blocked location → CDN (keep tab for pipe)");
+          return true;
+        }
+        return false;
+      }
+      var loc = pw.location;
+      try {
+        var desc = Object.getOwnPropertyDescriptor(pw.Location.prototype, "href") ||
+          Object.getOwnPropertyDescriptor(loc, "href");
+        if (desc && desc.set) {
+          Object.defineProperty(loc, "href", {
+            configurable: true,
+            get: function () {
+              return desc.get.call(loc);
+            },
+            set: function (v) {
+              if (blockAssign(v)) return;
+              return desc.set.call(loc, v);
+            }
+          });
+        }
+      } catch (e1) {
+        /* ignore */
+      }
+      var assign = loc.assign.bind(loc);
+      var replace = loc.replace.bind(loc);
+      loc.assign = function (u) {
+        if (blockAssign(u)) return;
+        return assign(u);
+      };
+      loc.replace = function (u) {
+        if (blockAssign(u)) return;
+        return replace(u);
       };
     } catch (e) {
       /* ignore */
