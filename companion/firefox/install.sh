@@ -14,7 +14,7 @@ cp -f background.js solver.js local-hook.js ankergames-hook.js cdn-pipe.js icon4
 
 cat <<EOF
 
-JD Turnstile Companion 1.2.9 — Firefox + Chromium/Vivaldi
+JD Turnstile Companion 1.0.0 — Firefox + Chromium/Vivaldi
 ========================================================
 CDN-Fetch im AnkerGames-Tab (Browser-TLS) → localhost-Relay → JD.
 Tab offen lassen bis Overlay „Stream finished“ / Download fertig.
