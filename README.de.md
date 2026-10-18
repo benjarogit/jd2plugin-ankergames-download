@@ -88,7 +88,9 @@ Du wirst gefragt:
 2. Welcher Browser für Captchas? → einen **Namen** tippen, z. B. `vivaldi`, `chrome`, `brave`, `edge`, `firefox` oder `all`  
    **Keine einzelne Zahl in die Shell tippen** — das ist kein Befehl.
 
-Danach den `.crx`-/`.xpi`-Dialog im Browser bestätigen und den **Browser einmal neu starten**.
+**Chromium-Familie (Vivaldi/Chrome/Brave/Edge):** die Erweiterung wird per **Policy automatisch force-installiert** (kein Drag&Drop). Der Installer startet den Browser neu.
+
+**Firefox Release:** Mozilla verlangt eine **Signatur**. Einmalig kostenlose AMO-API-Keys setzen (`AMO_JWT_ISSUER` / `AMO_JWT_SECRET`) und Firefox-Schritt erneut — siehe [`companion/SIGNING.md`](companion/SIGNING.md). Bis dahin: Developer Edition oder XPI manuell.
 
 Eigener JD-Pfad: `JD_HOME="/pfad/zu/jdownloader" ./install.sh`
 

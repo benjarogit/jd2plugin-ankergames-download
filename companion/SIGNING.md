@@ -1,56 +1,33 @@
-# Signing & updates
+# Signing & automatic install
 
-## Chromium / Chrome / Vivaldi / Brave / Edge
+## Chromium / Chrome / Vivaldi / Brave / Edge (Linux)
 
-No store account required for self-distribution.
+**No store account needed.** `./install-chromium.sh` (or root `./install.sh`) writes a managed policy that **force-installs** the local `.crx` via `file://` updates.xml. The browser restarts; the add-on appears under `…://extensions` without drag-and-drop.
 
-1. Build `.crx` with the stable key in `signing/chromium.pem` (keeps id `haopihkkdnnohoknooliddghpanmmedj`).
-2. Attach the CRX to a GitHub Release.
-3. Point `updates/chromium.xml` at that asset (done automatically by `.github/workflows/companion-release.yml`).
+Windows/macOS: Chrome only allows force-install of non-store extensions on managed/enrolled devices. On those OSes, drag the `.crx` onto `chrome://extensions` (Developer mode) or use the Web Store if published later.
 
-Browsers poll:
+## Firefox (Release)
 
-`https://raw.githubusercontent.com/benjarogit/jd2plugin-ankergames-download/main/updates/chromium.xml`
+Mozilla **requires a signature**. Unsigned XPIs will not auto-install on Release Firefox (policy or file dialog).
 
-The extension also checks the GitHub Releases API every few hours and shows a toolbar badge **↑** if a newer version exists.
+### One-time AMO API key (free)
 
-## Firefox (AMO)
-
-Release Firefox only installs / auto-updates **Mozilla-signed** XPIs.
-
-### One-time: AMO API credentials
-
-1. https://addons.mozilla.org → developer hub  
+1. https://addons.mozilla.org → developer account  
 2. https://addons.mozilla.org/developers/addon/api/key/ → JWT  
-3. Export:
+3. In the shell:
 
 ```bash
 export AMO_JWT_ISSUER="user:xxxxxxxx:xxx"
 export AMO_JWT_SECRET="your-secret"
-```
-
-### Sign (unlisted — GitHub self-distribution)
-
-```bash
 cd companion
-./build-packages.sh
-npx --yes web-ext sign \
-  --source-dir firefox \
-  --channel unlisted \
-  --api-key "$AMO_JWT_ISSUER" \
-  --api-secret "$AMO_JWT_SECRET" \
-  --artifacts-dir dist
+./install-firefox.sh
 ```
 
-Replace the unsigned XPI in the Release with the signed file. Firefox then polls:
+That signs an **unlisted** XPI (self-distribution on GitHub), writes Firefox enterprise policy, and restarts Firefox so the add-on installs automatically.
 
-`https://raw.githubusercontent.com/benjarogit/jd2plugin-ankergames-download/main/updates/firefox.json`
+Attach the signed XPI to the GitHub Release and keep `updates/firefox.json` in sync for auto-updates.
 
-### Without signing
+### Without AMO
 
-- **Firefox Developer Edition / Nightly**: `about:config` → `xpinstall.signatures.required` = `false`, then install the XPI.  
-- Native `update_url` will not apply on Release Firefox for unsigned builds; the **↑** badge still opens the GitHub Release page.
-
-## Safari
-
-No GitHub CRX/XPI feed. Distribute via notarized macOS app / App Store. See `safari/README.md`.
+- Firefox Developer Edition / Nightly: `xpinstall.signatures.required` = `false`, then install the XPI once.  
+- Or wait until a signed build is attached to [Releases](https://github.com/benjarogit/jd2plugin-ankergames-download/releases).

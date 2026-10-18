@@ -89,7 +89,9 @@ You will be asked:
 2. Which browser for captchas? → type a **name**, e.g. `vivaldi`, `chrome`, `brave`, `edge`, `firefox`, or `all`  
    **Do not type a lone number into the shell** — that is not a command.
 
-Then confirm the `.crx` / `.xpi` prompt in the browser and **restart the browser once**.
+**Chromium family (Vivaldi/Chrome/Brave/Edge):** the add-on is **force-installed automatically** via a local managed policy (no drag-and-drop). The installer restarts the browser.
+
+**Firefox Release:** Mozilla requires a **signature**. Set free AMO API keys once (`AMO_JWT_ISSUER` / `AMO_JWT_SECRET`) and re-run the Firefox step — see [`companion/SIGNING.md`](companion/SIGNING.md). Until then, use Developer Edition or install the XPI manually.
 
 Custom JD path: `JD_HOME="/path/to/jdownloader" ./install.sh`
 
