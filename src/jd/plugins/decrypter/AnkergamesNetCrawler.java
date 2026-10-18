@@ -25,13 +25,11 @@ import org.appwork.utils.StringUtils;
 import org.appwork.utils.formatter.SizeFormatter;
 
 import jd.PluginWrapper;
-import jd.controlling.AccountController;
 import jd.controlling.ProgressController;
 import jd.http.Browser;
 import jd.http.Cookies;
 import jd.nutils.encoding.Encoding;
 import jd.parser.Regex;
-import jd.plugins.Account;
 import jd.plugins.CryptedLink;
 import jd.plugins.DecrypterPlugin;
 import jd.plugins.DownloadLink;
@@ -82,12 +80,7 @@ public class AnkergamesNetCrawler extends PluginForDecrypt {
         final ArrayList<DownloadLink> ret = new ArrayList<DownloadLink>();
         final String contenturl = param.getCryptedUrl();
         final String slug = new Regex(contenturl, this.getSupportedLinks()).getMatch(0);
-        final Account account = AccountController.getInstance().getValidAccount(this.getHost());
-        if (account != null) {
-            /* Shares this.br via getNewPluginForHostInstance */
-            final AnkergamesNet hoster = (AnkergamesNet) this.getNewPluginForHostInstance(this.getHost());
-            hoster.login(account, false);
-        }
+        /* Guest session only — AnkerGames login is not used by this plugin. */
         br.getPage(contenturl);
         if (br.getHttpConnection().getResponseCode() == 404) {
             throw new PluginException(LinkStatus.ERROR_FILE_NOT_FOUND);
@@ -113,7 +106,7 @@ public class AnkergamesNetCrawler extends PluginForDecrypt {
         final String downloadId = br.getRegex("generateDownloadUrl\\((\\d+)\\)").getMatch(0);
         if (downloadId == null) {
             if (br.containsHTML("(?i)Sign In Required|not available in your region|Subscribers Only")) {
-                throw new PluginException(LinkStatus.ERROR_PREMIUM, PluginException.VALUE_ID_PREMIUM_ONLY);
+                throw new PluginException(LinkStatus.ERROR_FATAL, "Download not available (region / site restriction)");
             }
             throw new PluginException(LinkStatus.ERROR_PLUGIN_DEFECT);
         }
@@ -129,11 +122,11 @@ public class AnkergamesNetCrawler extends PluginForDecrypt {
             entries = requestGenerateDownloadUrl(br, downloadId);
         }
         if (Boolean.TRUE.equals(entries.get("geo_blocked")) || "subscribe".equals(entries.get("modal_type"))) {
-            throw new PluginException(LinkStatus.ERROR_FATAL, "Download blocked for this region/account");
+            throw new PluginException(LinkStatus.ERROR_FATAL, "Download blocked for this region");
         } else if (Boolean.TRUE.equals(entries.get("show_upgrade"))) {
             final Object details = entries.get("details");
             final String msg = details != null ? details.toString() : "Download limit reached";
-            throw new PluginException(LinkStatus.ERROR_PREMIUM, msg, PluginException.VALUE_ID_PREMIUM_ONLY);
+            throw new PluginException(LinkStatus.ERROR_FATAL, msg);
         }
         final Object error = entries.get("error");
         if (error != null) {

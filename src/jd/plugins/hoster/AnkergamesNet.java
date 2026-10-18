@@ -28,11 +28,9 @@ import org.appwork.utils.formatter.SizeFormatter;
 import org.appwork.utils.os.CrossSystem;
 import org.jdownloader.captcha.v2.challenge.cloudflareturnstile.AbstractCloudflareTurnstileCaptcha;
 import org.jdownloader.captcha.v2.challenge.cloudflareturnstile.CloudflareTurnstileChallenge;
-import org.jdownloader.gui.translate._GUI;
 import org.jdownloader.plugins.controller.LazyPlugin;
 
 import jd.PluginWrapper;
-import jd.controlling.AccountController;
 import jd.http.Browser;
 import jd.http.Browser.BlockedByException;
 import jd.http.Cookies;
@@ -40,11 +38,7 @@ import jd.http.URLConnectionAdapter;
 import jd.plugins.components.AnkergamesCdnRelay;
 import jd.nutils.encoding.Encoding;
 import jd.parser.Regex;
-import jd.parser.html.Form;
 import jd.plugins.Account;
-import jd.plugins.Account.AccountType;
-import jd.plugins.AccountInfo;
-import jd.plugins.AccountInvalidException;
 import jd.plugins.DownloadLink;
 import jd.plugins.DownloadLink.AvailableStatus;
 import jd.plugins.HostPlugin;
@@ -56,7 +50,7 @@ import jd.plugins.PluginForHost;
 public class AnkergamesNet extends PluginForHost {
     public AnkergamesNet(PluginWrapper wrapper) {
         super(wrapper);
-        this.enablePremium("https://" + getHost() + "/register");
+        /* Guest + browser companion only — no AnkerGames account in JD. */
     }
 
     @Override
@@ -74,7 +68,7 @@ public class AnkergamesNet extends PluginForHost {
 
     @Override
     public LazyPlugin.FEATURE[] getFeatures() {
-        return new LazyPlugin.FEATURE[] { LazyPlugin.FEATURE.USERNAME_IS_EMAIL, LazyPlugin.FEATURE.COOKIE_LOGIN_OPTIONAL };
+        return new LazyPlugin.FEATURE[] {};
     }
 
     @Override
@@ -231,14 +225,11 @@ public class AnkergamesNet extends PluginForHost {
 
     @Override
     public AvailableStatus requestFileInformation(final DownloadLink link) throws Exception {
-        return requestFileInformation(link, AccountController.getInstance().getValidAccount(this.getHost()), false);
+        return requestFileInformation(link, false);
     }
 
-    private AvailableStatus requestFileInformation(final DownloadLink link, final Account account, final boolean isDownload) throws Exception {
+    private AvailableStatus requestFileInformation(final DownloadLink link, final boolean isDownload) throws Exception {
         this.setBrowserExclusive();
-        if (account != null) {
-            this.login(account, false);
-        }
         final String url = link.getPluginPatternMatcher();
         if (new Regex(url, PATTERN_DOWNLOAD_FILE).patternFind()) {
             if (!link.isNameSet()) {
@@ -287,21 +278,16 @@ public class AnkergamesNet extends PluginForHost {
 
     @Override
     public void handleFree(final DownloadLink link) throws Exception, PluginException {
-        handleDownload(link, null);
+        handleDownload(link);
     }
 
-    @Override
-    public void handlePremium(final DownloadLink link, final Account account) throws Exception {
-        handleDownload(link, account);
-    }
-
-    private void handleDownload(final DownloadLink link, final Account account) throws Exception {
-        if (!attemptStoredDownloadurlDownload(link, account)) {
+    private void handleDownload(final DownloadLink link) throws Exception {
+        if (!attemptStoredDownloadurlDownload(link)) {
             /*
              * Always mint a fresh treasure-box + fileToken immediately before Turnstile. Tickets from
              * linkgrab time are often already 410 Gone by the time the user finishes the captcha.
              */
-            final String fileToken = refreshTreasureFileToken(link, account);
+            final String fileToken = refreshTreasureFileToken(link);
             if (StringUtils.isEmpty(fileToken)) {
                 throw new PluginException(LinkStatus.ERROR_PLUGIN_DEFECT, "Missing file token after refresh");
             }
@@ -392,8 +378,8 @@ public class AnkergamesNet extends PluginForHost {
                     chunks = 1;
                 } else {
                     prepareCdnRequestHeaders(brc, link, dllink);
-                    resume = this.isResumeable(link, account);
-                    chunks = this.getMaxChunks(link, account);
+                    resume = this.isResumeable(link, null);
+                    chunks = this.getMaxChunks(link, null);
                 }
                 try {
                     dl = jd.plugins.BrowserAdapter.openDownload(brc, link, dllink, resume, chunks);
@@ -509,10 +495,7 @@ public class AnkergamesNet extends PluginForHost {
     /**
      * Re-run generate-download-url from the game page so Turnstile + /link use a live file ticket.
      */
-    private String refreshTreasureFileToken(final DownloadLink link, final Account account) throws Exception {
-        if (account != null) {
-            login(account, false);
-        }
+    private String refreshTreasureFileToken(final DownloadLink link) throws Exception {
         String gameUrl = link.getStringProperty(PROPERTY_GAME_URL);
         String downloadId = link.getStringProperty(PROPERTY_DOWNLOAD_ID);
         if (downloadId == null) {
@@ -521,7 +504,7 @@ public class AnkergamesNet extends PluginForHost {
         }
         if (StringUtils.isEmpty(downloadId)) {
             /* Last resort: try existing pattern URL once. */
-            requestFileInformation(link, account, true);
+            requestFileInformation(link, true);
             String fileToken = extractDownloadFileToken(br);
             if (fileToken == null) {
                 fileToken = getDownloadFileToken(link);
@@ -705,13 +688,13 @@ public class AnkergamesNet extends PluginForHost {
              */
             throw new PluginException(LinkStatus.ERROR_TEMPORARILY_UNAVAILABLE, errorMessage, 60 * 1000l);
         } else if (errorMessage.matches("(?i).*limit.*|.*quota.*|.*upgrade.*|.*subscri.*")) {
-            throw new PluginException(LinkStatus.ERROR_PREMIUM, errorMessage, PluginException.VALUE_ID_PREMIUM_ONLY);
+            throw new PluginException(LinkStatus.ERROR_FATAL, errorMessage);
         } else {
             throw new PluginException(LinkStatus.ERROR_TEMPORARILY_UNAVAILABLE, errorMessage, 5 * 60 * 1000l);
         }
     }
 
-    private boolean attemptStoredDownloadurlDownload(final DownloadLink link, final Account account) throws Exception {
+    private boolean attemptStoredDownloadurlDownload(final DownloadLink link) throws Exception {
         final String url = link.getStringProperty(PROPERTY_DIRECTURL);
         if (StringUtils.isEmpty(url)) {
             return false;
@@ -724,7 +707,7 @@ public class AnkergamesNet extends PluginForHost {
         try {
             final Browser brc = br.cloneBrowser();
             prepareCdnRequestHeaders(brc, link, url);
-            dl = new jd.plugins.BrowserAdapter().openDownload(brc, link, url, this.isResumeable(link, account), this.getMaxChunks(link, account));
+            dl = new jd.plugins.BrowserAdapter().openDownload(brc, link, url, this.isResumeable(link, null), this.getMaxChunks(link, null));
             if (!this.looksLikeDownloadableContent(dl.getConnection())) {
                 brc.followConnection(true);
                 throw new IOException("Stored directurl is invalid");
@@ -760,96 +743,14 @@ public class AnkergamesNet extends PluginForHost {
         throw new PluginException(LinkStatus.ERROR_PLUGIN_DEFECT);
     }
 
-    public void login(final Account account, final boolean force) throws Exception {
-        synchronized (account) {
-            br.setCookiesExclusive(true);
-            final Cookies userCookies = account.loadUserCookies();
-            final Cookies cookies = account.loadCookies("");
-            if (userCookies != null) {
-                logger.info("Attempting user cookie login");
-                br.setCookies(userCookies);
-                if (!force) {
-                    return;
-                }
-                br.getPage("https://" + this.getHost() + "/");
-                if (this.isLoggedin(br)) {
-                    logger.info("User cookie login successful");
-                    return;
-                }
-                logger.info("User cookie login failed");
-                if (account.hasEverBeenValid()) {
-                    throw new AccountInvalidException(_GUI.T.accountdialog_check_cookies_expired());
-                } else {
-                    throw new AccountInvalidException(_GUI.T.accountdialog_check_cookies_invalid());
-                }
-            }
-            if (cookies != null) {
-                logger.info("Attempting cookie login");
-                br.setCookies(cookies);
-                if (!force) {
-                    return;
-                }
-                br.getPage("https://" + this.getHost() + "/");
-                if (this.isLoggedin(br)) {
-                    logger.info("Cookie login successful");
-                    account.saveCookies(br.getCookies(br.getHost()), "");
-                    return;
-                }
-                logger.info("Cookie login failed");
-                br.clearCookies(null);
-                account.clearCookies("");
-            }
-            logger.info("Performing full login");
-            br.getPage("https://" + this.getHost() + "/login");
-            final Form loginform = br.getFormbyKey("email");
-            if (loginform == null) {
-                throw new PluginException(LinkStatus.ERROR_PLUGIN_DEFECT);
-            }
-            loginform.put("email", Encoding.urlEncode(account.getUser()));
-            loginform.put("password", Encoding.urlEncode(account.getPass()));
-            loginform.put("remember", "1");
-            br.submitForm(loginform);
-            if (!isLoggedin(br)) {
-                throw new AccountInvalidException();
-            }
-            account.saveCookies(br.getCookies(br.getHost()), "");
-        }
-    }
-
-    private boolean isLoggedin(final Browser br) {
-        if (br.containsHTML("(?i)href\\s*=\\s*\"[^\"]*/logout")) {
-            return true;
-        } else if (br.getURL() != null && br.getURL().matches("(?i).*/login(\\?|$)") && br.containsHTML("name=\"email\"") && br.containsHTML("name=\"password\"")) {
-            return false;
-        } else {
-            /* Guest pages always expose Sign up; authenticated UI typically does not. */
-            return !br.containsHTML("(?i)href\\s*=\\s*\"https?://[^\"]*/register\"") && !br.containsHTML("(?i)href\\s*=\\s*\"/register\"");
-        }
-    }
-
-    @Override
-    public AccountInfo fetchAccountInfo(final Account account) throws Exception {
-        final AccountInfo ai = new AccountInfo();
-        login(account, true);
-        ai.setUnlimitedTraffic();
-        account.setType(AccountType.FREE);
-        account.setConcurrentUsePossible(true);
-        return ai;
-    }
-
     @Override
     public boolean hasCaptcha(final DownloadLink link, final Account acc) {
-        /* Cloudflare Turnstile on treasure-box / download-file resolution */
+        /* Cloudflare Turnstile via browser companion */
         return true;
     }
 
     @Override
     public int getMaxSimultanFreeDownloadNum() {
-        return 1;
-    }
-
-    @Override
-    public int getMaxSimultanPremiumDownloadNum() {
         return 1;
     }
 

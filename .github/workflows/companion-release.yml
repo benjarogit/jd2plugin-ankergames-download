@@ -1,15 +1,14 @@
-name: Companion release feeds
+name: Refresh update feeds
 
-# After publishing a GitHub Release that contains the companion assets,
-# refresh updates/chromium.xml and updates/firefox.json on main so browsers
-# can auto-update.
+# After a GitHub Release with companion assets is published, refresh
+# updates/chromium.xml and updates/firefox.json on main.
 on:
   release:
     types: [published]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag (e.g. v1.4.0)"
+        description: "Release tag (e.g. v1.4.2)"
         required: true
 
 permissions:
@@ -21,17 +20,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve tag + version
+      - name: Resolve tag
         id: ver
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           TAG="${{ github.event.release.tag_name || inputs.tag }}"
           TAG="${TAG#v}"
-          TAG_FULL="v${TAG}"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "tag_full=${TAG_FULL}" >> "$GITHUB_OUTPUT"
+          echo "tag_full=v${TAG}" >> "$GITHUB_OUTPUT"
           EXT_ID="$(tr -d '[:space:]' < companion/signing/chromium-extension-id.txt)"
           echo "ext_id=${EXT_ID}" >> "$GITHUB_OUTPUT"
 
@@ -47,13 +43,10 @@ jobs:
           <?xml version='1.0' encoding='UTF-8'?>
           <gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
             <app appid='${EXT_ID}'>
-              <updatecheck
-                codebase='${BASE}/jd-turnstile-companion-chromium-${TAG}.crx'
-                version='${TAG}' />
+              <updatecheck codebase='${BASE}/jd-turnstile-companion-chromium-${TAG}.crx' version='${TAG}' />
             </app>
           </gupdate>
           EOF
-          # Strip leading indent from heredoc
           sed -i 's/^          //' updates/chromium.xml
           python3 - <<PY
           import json
@@ -67,7 +60,7 @@ jobs:
               }
             }
           }
-          open("updates/firefox.json","w").write(json.dumps(data, indent=2) + "\n")
+          open("updates/firefox.json", "w").write(json.dumps(data, indent=2) + "\n")
           PY
 
       - name: Commit feeds

@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install zip
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq zip
+
+      - name: Smoke tests (layout, manifests, build-packages)
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Upload companion artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: companion-packages
+          path: |
+            companion/dist/*.xpi
+            companion/dist/*.zip
+            companion/dist/*.crx
+          if-no-files-found: warn
