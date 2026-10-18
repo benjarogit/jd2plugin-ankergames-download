@@ -3,10 +3,7 @@
     "id": 1,
     "priority": 1,
     "action": {
-      "type": "redirect",
-      "redirect": {
-        "extensionPath": "/hold.html"
-      }
+      "type": "block"
     },
     "condition": {
       "urlFilter": "||dlproxy.uk^",

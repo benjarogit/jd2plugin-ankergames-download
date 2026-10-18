@@ -563,17 +563,13 @@ function startCdnPipe(cdnUrl, relayBase, tabId) {
   if (tabId != null) {
     sendTabMessage(tabId, {
       type: "jdt-status",
-      text: "JD is downloading — keep this tab open until finished…"
+      text: "JD is downloading — closing this tab…"
     }).catch(function () {});
   }
+  /* Offscreen owns the stream; AnkerGames redirect → hold.html looks broken in Vivaldi. */
+  dismissPipeUiTabs();
   function okDone() {
-    if (tabId != null) {
-      sendTabMessage(tabId, {
-        type: "jdt-status",
-        text: "Stream finished — you can close this tab."
-      }).catch(function () {});
-    }
-    closePipeSessionTabs();
+    endPipeSession();
   }
   function failDone(err) {
     const msg = String(err && err.message ? err.message : err);
@@ -620,10 +616,12 @@ function wasSolved(key) {
   return Date.now() - solvedGate[key] < 2 * 60 * 60 * 1000;
 }
 
-function closePipeSessionTabs() {
-  if (!pipeSession) {
+/** Close captcha/AnkerGames UI tabs; keep pipeSession for download-kill until stream ends. */
+function dismissPipeUiTabs() {
+  if (!pipeSession || pipeSession.uiDismissed) {
     return;
   }
+  pipeSession.uiDismissed = true;
   const ids = [];
   if (pipeSession.workTabId != null) {
     ids.push(pipeSession.workTabId);
@@ -635,6 +633,20 @@ function closePipeSessionTabs() {
     delete jobsByTab[id];
     delete localHandled[id];
   });
+  /* Short delay so the status flash is visible; then remove ugly redirect tabs. */
+  setTimeout(function () {
+    ids.forEach(function (id) {
+      api.tabs.remove(id).catch(function () {});
+    });
+  }, 600);
+}
+
+function endPipeSession() {
+  if (!pipeSession) {
+    activeCaptchaJob = null;
+    return;
+  }
+  dismissPipeUiTabs();
   pipeSession = null;
   activeCaptchaJob = null;
   if (api.alarms && api.alarms.clear) {
@@ -644,11 +656,11 @@ function closePipeSessionTabs() {
       /* ignore */
     }
   }
-  setTimeout(function () {
-    ids.forEach(function (id) {
-      api.tabs.remove(id).catch(function () {});
-    });
-  }, 2000);
+}
+
+/** @deprecated use endPipeSession */
+function closePipeSessionTabs() {
+  endPipeSession();
 }
 
 if (api.alarms && api.alarms.onAlarm) {
@@ -721,8 +733,7 @@ function armDlproxySessionRules() {
   if (!api.declarativeNetRequest || !api.declarativeNetRequest.updateSessionRules) {
     return;
   }
-  const hold = api.runtime.getURL("hold.html");
-  /* Only main/sub frame — never block xmlhttprequest/other or the CDN→relay fetch dies. */
+  /* Block main_frame only — redirect→hold.html is ERR_BLOCKED_BY_CLIENT in Vivaldi. */
   api.declarativeNetRequest
     .updateSessionRules({
       removeRuleIds: [9001],
@@ -730,7 +741,7 @@ function armDlproxySessionRules() {
         {
           id: 9001,
           priority: 100,
-          action: { type: "redirect", redirect: { extensionPath: "/hold.html" } },
+          action: { type: "block" },
           condition: {
             urlFilter: "||dlproxy.uk^",
             resourceTypes: ["main_frame", "sub_frame"]
@@ -739,7 +750,7 @@ function armDlproxySessionRules() {
       ]
     })
     .then(function () {
-      console.log("[JD Turnstile] session DNR armed", hold.slice(0, 40));
+      console.log("[JD Turnstile] session DNR armed (block main_frame)");
     })
     .catch(function (err) {
       console.warn("[JD Turnstile] session DNR failed", err);
@@ -849,27 +860,37 @@ function installDownloadGuard() {
 installDownloadGuard();
 
 /**
- * MV3 often cannot cancel navigation with webRequestBlocking. If the page still
- * navigates to dlproxy during an active pipe, bounce back to the last AnkerGames URL.
+ * If AnkerGames still navigates to dlproxy (or an old hold.html redirect), close the
+ * tab while piping — never leave Vivaldi on chrome-extension://…/hold.html.
  */
 function installDlproxyNavGuard() {
   if (!api.webNavigation || !api.webNavigation.onBeforeNavigate) {
     return;
   }
+  const holdPrefix = api.runtime.getURL("hold.html");
   try {
     api.webNavigation.onBeforeNavigate.addListener(function (details) {
       if (!details || details.frameId !== 0) {
         return;
       }
-      if (!DLPROXY_RE.test(details.url || "")) {
+      const url = details.url || "";
+      const toDlproxy = DLPROXY_RE.test(url);
+      const toHold = url.indexOf(holdPrefix) === 0;
+      if (!toDlproxy && !toHold) {
         return;
       }
-      /* Always intercept dlproxy main-frame while companion is loaded — prefer hold page. */
-      const hold = api.runtime.getURL("hold.html");
+      if (pipeSession) {
+        console.warn("[JD Turnstile] closing redirect tab", url.slice(0, 80));
+        api.tabs.remove(details.tabId).catch(function () {});
+        return;
+      }
       const back = lastAnkerUrlByTab[details.tabId];
-      const target = back || hold;
-      console.warn("[JD Turnstile] bounce dlproxy →", target.slice(0, 80));
-      api.tabs.update(details.tabId, { url: target }).catch(function () {});
+      if (back) {
+        console.warn("[JD Turnstile] bounce dlproxy → AnkerGames");
+        api.tabs.update(details.tabId, { url: back }).catch(function () {});
+      } else {
+        api.tabs.remove(details.tabId).catch(function () {});
+      }
     });
   } catch (e) {
     console.warn("[JD Turnstile] webNavigation guard unavailable", e);
