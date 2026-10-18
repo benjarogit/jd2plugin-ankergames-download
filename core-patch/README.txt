@@ -7,5 +7,7 @@ turnstile.html
 CloudflareTurnstileChallenge.class
   Fills those placeholders from the plugin challenge (getRelayUrl / getGameUrl / …).
 
-The plugin installer (plugin/install.sh or install.ps1) copies these into Core.jar
-and keeps a timestamped backup. Do not run jar updates while JDownloader is running.
+Manual install only: open Core.jar with 7-Zip / Archive Manager, replace the two
+files under org/jdownloader/captcha/v2/challenge/cloudflareturnstile/, backup first.
+Do not patch while JDownloader is running.
+Full steps: ../README.md or ../README.de.md

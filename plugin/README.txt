@@ -1,7 +1,7 @@
 AnkerGames — JDownloader 2 plugin
 =================================
 
-No AnkerGames login required.
+No AnkerGames login required. Manual install only.
 
 1) Find your JD folder (installer or portable — path differs per PC):
      Windows:     find-jd-home.bat
@@ -16,10 +16,7 @@ No AnkerGames login required.
      - Portable: check where you extracted JD
      Details: ../README.md  or  ../README.de.md  ("If nothing is found")
 
-2) Full install steps: ../README.md  or  ../README.de.md
+2) Full install steps (copy files + Core patch):
+     ../README.md  or  ../README.de.md
 
-Optional copy helper (after you know JD root):
-  Linux/macOS:  JD_HOME="/path/to/root" ./install.sh
-  Windows:      install.bat  /  install.ps1
-
-Then install the browser add-on (root README step 2).
+3) Then install the browser add-on (root README step 3).

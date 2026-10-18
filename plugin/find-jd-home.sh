@@ -141,18 +141,20 @@ if [[ "${#found[@]}" -gt 1 ]]; then
   if [[ "${lang}" == de ]]; then
     echo "Mehrere Installationen — nimm die, die du wirklich startest"
     echo "(Verknüpfung prüfen / portable Ordner)."
-    echo "Installer:  JD_HOME=\"/pfad/zum/richtigen/root\" ./install.sh"
+    echo "Dann Plugins manuell nach …/jd/plugins/ kopieren (siehe README)."
   else
     echo "Multiple installs — use the one you actually launch"
     echo "(check your shortcut / portable folder)."
-    echo "Installer:  JD_HOME=\"/path/to/correct/root\" ./install.sh"
+    echo "Then copy plugins manually into …/jd/plugins/ (see README)."
   fi
 else
   if [[ "${lang}" == de ]]; then
-    echo "Optionaler Helfer mit diesem Ordner:"
-    echo "  JD_HOME=\"${found[0]}\" ./install.sh"
+    echo "Als Nächstes: Plugins manuell nach"
+    echo "  ${found[0]}/jd/plugins/"
+    echo "kopieren und Core.jar patchen (siehe README)."
   else
-    echo "Optional helper with this folder:"
-    echo "  JD_HOME=\"${found[0]}\" ./install.sh"
+    echo "Next: copy plugins manually into"
+    echo "  ${found[0]}/jd/plugins/"
+    echo "and patch Core.jar (see README)."
   fi
 fi

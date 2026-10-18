@@ -111,17 +111,6 @@ Zeigt **JD-Root** und **Plugin-Ordner**. Mehrere Treffer → die Installation de
 
 4. JD starten  
 
-<details>
-<summary>Optional: Kopier-Skript</summary>
-
-```bash
-cd plugin
-JD_HOME="/pfad/zum/JD-Root" ./install.sh   # Linux / macOS
-# Windows: install.bat
-```
-
-</details>
-
 </details>
 
 <details>

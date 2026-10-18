@@ -111,17 +111,6 @@ It prints **JD root** and **plugin folder**. Multiple hits → use the one your 
 
 4. Start JD  
 
-<details>
-<summary>Optional copy script</summary>
-
-```bash
-cd plugin
-JD_HOME="/path/to/JD-root" ./install.sh   # Linux / macOS
-# Windows: install.bat
-```
-
-</details>
-
 </details>
 
 <details>
