@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest"><img src="https://img.shields.io/badge/⬇_Download_Latest_Release-0b1220?style=for-the-badge&labelColor=2aa9e0" alt="Download Latest Release" /></a>
+  <a href="https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest/download/ankergames-jd2-full.zip"><img src="https://img.shields.io/badge/⬇_Download-0b1220?style=for-the-badge&labelColor=2aa9e0" alt="Download" /></a>
   &nbsp;
-  <a href="https://github.com/benjarogit/jd2plugin-ankergames-download/archive/refs/heads/main.zip"><img src="https://img.shields.io/badge/⬇_Download_ZIP-1a5f7a?style=for-the-badge" alt="Download ZIP" /></a>
+  <a href="https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest"><img src="https://img.shields.io/badge/All_release_files-1a5f7a?style=for-the-badge" alt="All release files" /></a>
 </p>
 
 <p align="center">
