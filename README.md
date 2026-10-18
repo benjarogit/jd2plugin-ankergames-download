@@ -1,181 +1,184 @@
 <p align="center">
-  <img src="companion/assets/logo.png" width="200" alt="AnkerGames × JDownloader" />
+  <img src="companion/assets/logo.png" width="180" alt="AnkerGames × JDownloader" />
 </p>
 
 <h1 align="center">AnkerGames → JDownloader&nbsp;2</h1>
 
 <p align="center">
-  Download AnkerGames titles with JDownloader<br/>
-  <em>Manual install · No MyJD · No AnkerGames login</em>
+  <b>AnkerGames downloads that actually work in JD</b><br/>
+  Manual install · No MyJD · No AnkerGames login
 </p>
 
 <p align="center">
-  <a href="https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest/download/ankergames-jd2-full.zip"><img src="https://img.shields.io/badge/⬇_Download_ZIP-0b1220?style=for-the-badge&labelColor=2aa9e0" alt="Download ZIP" /></a>
+  <a href="https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest/download/ankergames-jd2-full.zip"><img src="https://img.shields.io/badge/⬇_Plugin_ZIP-0b1220?style=for-the-badge&labelColor=2aa9e0" alt="Download Plugin ZIP" /></a>
+  &nbsp;
+  <a href="https://jdownloader.org/jdownloader2"><img src="https://img.shields.io/badge/⬇_JDownloader_2-1a5f7a?style=for-the-badge&labelColor=0b1220" alt="Download JDownloader 2" /></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest"><img src="https://img.shields.io/github/v/release/benjarogit/jd2plugin-ankergames-download?style=flat-square" alt="Release" /></a>
-  <a href="https://github.com/benjarogit/jd2plugin-ankergames-download/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/benjarogit/jd2plugin-ankergames-download/ci.yml?style=flat-square&label=CI" alt="CI" /></a>
+  <img src="https://img.shields.io/github/v/release/benjarogit/jd2plugin-ankergames-download?style=flat-square&label=release" alt="Release" />
+  <img src="https://img.shields.io/github/actions/workflow/status/benjarogit/jd2plugin-ankergames-download/ci.yml?style=flat-square&label=CI" alt="CI" />
   <img src="https://img.shields.io/badge/Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=flat-square" alt="Platform" />
+  &nbsp;·&nbsp; <a href="README.de.md">Deutsch</a>
 </p>
 
-<p align="center"><a href="README.de.md">Deutsch</a></p>
+---
+
+### Why?
+
+[ankergames.net](https://ankergames.net) is behind Cloudflare. JD’s Java client gets blocked.  
+This package adds a **JD plugin** + **browser add-on** so Turnstile runs in a real browser and the file streams to JD.
+
+> Unofficial · not affiliated with AppWork / JDownloader / AnkerGames
 
 ---
 
-## What you get
+### Install in 4 steps
 
-[ankergames.net](https://ankergames.net) sits behind **Cloudflare**. JDownloader’s Java client gets blocked.
+| | Step | Action |
+|:---:|:-----|:-------|
+| 0️⃣ | **Need JD?** | [Download JDownloader 2](https://jdownloader.org/jdownloader2) if you don’t have it |
+| 1️⃣ | **This ZIP** | [Download](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest/download/ankergames-jd2-full.zip) & unpack |
+| 2️⃣ | **Plugin** | Find JD folder → copy files → patch `Core.jar` |
+| 3️⃣ | **Browser** | Load the companion in Chrome/Vivaldi/… or Firefox Dev |
+| 4️⃣ | **Use** | Paste game URL in JD → solve captcha → **keep tab open** |
 
-This ZIP adds two pieces that work together:
+<details>
+<summary><b>📁 Step 2 — Find your JD folder (Pathfinder)</b></summary>
 
-| Piece | Role |
-|-------|------|
-| **JDownloader plugin** (+ small Core patch) | Talks to AnkerGames inside JD |
-| **Browser add-on** | Solves Turnstile and streams the file to JD over localhost |
+<br/>
 
-> Unofficial. Not affiliated with AppWork, JDownloader, or AnkerGames.
+Every PC is different (installer vs portable). You need the folder with **`JDownloader.jar`**.
 
----
+| Name | Meaning | Example |
+|------|---------|---------|
+| 🏠 **JD root** | `JDownloader.jar` + `Core.jar` | `C:\JDownloader\` · `~/.jd/` |
+| 📦 **Plugin folder** | nested `jd/plugins/` | `…/jd/plugins/` |
 
-## Quick start
+**Easiest — run the Pathfinder from the ZIP:**
 
-1. [Download the ZIP](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest/download/ankergames-jd2-full.zip) and unpack it  
-2. Install the **JDownloader** plugin → [Step 1](#step-1--jdownloader-plugin)  
-3. Install the **browser** add-on → [Step 2](#step-2--browser-add-on)  
-4. Paste a game URL in JD → solve captcha → **keep the tab open**
+| OS | Command |
+|----|---------|
+| 🪟 Windows | Double-click `plugin/find-jd-home.bat` |
+| 🐧 Linux / 🍎 macOS | `cd plugin && chmod +x find-jd-home.sh && ./find-jd-home.sh` |
 
----
+It prints **JD root** and **plugin folder**. Multiple hits → use the one your shortcut starts.
 
-## Step 1 — JDownloader plugin
+<details>
+<summary>Manual search instead</summary>
 
-### Find your JD folder first
+1. Search PC for `JDownloader.jar` (`Win+S`)  
+2. Right-click → **Open file location** → that’s the JD root  
+3. Open `jd` → `plugins` → plugin folder  
 
-Every PC is different (installer vs portable). You need the folder that contains **`JDownloader.jar`**.
+</details>
 
-| Name | What it is | Example |
-|------|------------|---------|
-| **JD root** | Folder with `JDownloader.jar` + `Core.jar` | `C:\JDownloader\` or `~/.jd/` |
-| **Plugin folder** | Nested `jd/plugins/` inside that root | `…/jd/plugins/` |
+<details>
+<summary>❓ Pathfinder finds nothing</summary>
 
-#### Option A — Pathfinder (recommended)
+1. Start JDownloader once  
+2. Right-click shortcut → **Open file location**  
+3. Portable: check Desktop / Downloads / USB / other drive  
+4. Or search for `Core.jar` (must sit next to `JDownloader.jar`)  
+5. Copy plugins into `<JD-Root>/jd/plugins/`  
 
-| System | Run this from the unpacked ZIP |
-|--------|--------------------------------|
-| **Windows** | Double-click `plugin/find-jd-home.bat` |
-| **Linux / macOS** | `cd plugin && chmod +x find-jd-home.sh && ./find-jd-home.sh` |
+</details>
 
-The helper prints:
+</details>
 
-- **JD root** — where `Core.jar` lives  
-- **Plugin folder** — where you copy the `.class` files  
+<details>
+<summary><b>🧩 Step 2 — Install plugin + Core patch</b></summary>
 
-If several installs show up, pick the one your shortcut actually starts.
+<br/>
 
-#### Option B — Search yourself
+1. **Quit JD** completely  
+2. Copy into **your** plugin folder:
 
-1. Search the PC for **`JDownloader.jar`** (Windows: `Win+S`)  
-2. Right-click → **Open file location** → that folder is the **JD root**  
-3. Open `jd` → `plugins` → that is the **plugin folder**
-
-#### If nothing is found
-
-1. Start JDownloader once (so it creates its folder)  
-2. Right-click the desktop / Start-menu shortcut → **Open file location**  
-3. Portable users: look where you extracted JD (Desktop, Downloads, USB, another drive)  
-4. Still stuck: search again for **`Core.jar`** — it must sit next to `JDownloader.jar`  
-5. Then copy plugins into: `<JD-Root>/jd/plugins/`
-
----
-
-### Install the plugin files
-
-1. **Quit JDownloader** completely.  
-2. Copy from the ZIP into **your** plugin folder:
-
-| From the ZIP | Into |
-|--------------|------|
+| From ZIP | Into |
+|----------|------|
 | `plugin/plugins/hoster/*` | `<JD-Root>/jd/plugins/hoster/` |
 | `plugin/plugins/decrypter/*` | `<JD-Root>/jd/plugins/decrypter/` |
 | `plugin/plugins/components/*` | `<JD-Root>/jd/plugins/components/` |
 
-You should end up with e.g. `<JD-Root>/jd/plugins/hoster/AnkergamesNet.class`.
+✅ Done when you see `<JD-Root>/jd/plugins/hoster/AnkergamesNet.class`
 
-3. Patch **`Core.jar`** in the **JD root** (next to `JDownloader.jar`). Open it with 7-Zip / Archive Manager, **backup first**, then replace:
+3. Patch **`Core.jar`** (in JD root, next to `JDownloader.jar`) with 7-Zip — **backup first**:
 
-| Path inside `Core.jar` | File from ZIP |
-|------------------------|---------------|
-| `org/jdownloader/captcha/v2/challenge/cloudflareturnstile/turnstile.html` | `core-patch/turnstile.html` |
-| `org/jdownloader/captcha/v2/challenge/cloudflareturnstile/CloudflareTurnstileChallenge.class` | `core-patch/CloudflareTurnstileChallenge.class` |
+| Inside `Core.jar` | Replace with |
+|-------------------|--------------|
+| `…/cloudflareturnstile/turnstile.html` | `core-patch/turnstile.html` |
+| `…/cloudflareturnstile/CloudflareTurnstileChallenge.class` | `core-patch/CloudflareTurnstileChallenge.class` |
 
-4. Start JDownloader.
+4. Start JD  
 
 <details>
-<summary>Optional: let the install script copy for you</summary>
+<summary>Optional copy script</summary>
 
 ```bash
 cd plugin
 JD_HOME="/path/to/JD-root" ./install.sh   # Linux / macOS
-# Windows: install.bat  (or set JD_HOME first)
+# Windows: install.bat
 ```
 
 </details>
 
----
+</details>
 
-## Step 2 — Browser add-on
+<details>
+<summary><b>🌐 Step 3 — Browser companion</b></summary>
 
-Use the **same browser** JDownloader opens for captchas.
+<br/>
 
-### Chrome · Vivaldi · Brave · Edge · Chromium
+Use the **same browser** JD opens for captchas.
 
-1. Open `chrome://extensions` (or `vivaldi://` / `brave://` / `edge://extensions`)  
-2. Turn **Developer mode** ON  
-3. **Load unpacked** → select `companion/chromium/`  
-4. Confirm **JD Turnstile Companion** is listed  
+| Browser | How |
+|---------|-----|
+| 🟢 Chrome / Vivaldi / Brave / Edge | `chrome://extensions` → Developer mode ON → **Load unpacked** → `companion/chromium/` |
+| 🦊 Firefox | **Dev Edition / Nightly** only → `about:config` → `xpinstall.signatures.required` = **false** → install `companion/dist/jd-turnstile-companion-firefox-*.xpi` |
 
-### Firefox
+</details>
 
-Use **Firefox Developer Edition** or **Nightly** (Release blocks unsigned add-ons).
+<details>
+<summary><b>▶️ Step 4 — Use it</b></summary>
 
-1. `about:config` → `xpinstall.signatures.required` → **false**  
-2. `about:addons` → ⚙ → **Install Add-on From File…**  
-3. Pick `companion/dist/jd-turnstile-companion-firefox-*.xpi`  
+<br/>
 
----
-
-## Use it
-
-1. In JDownloader, add e.g. `https://ankergames.net/game/…`  
-2. Start the download → solve **Turnstile** in the browser  
-3. **Keep the AnkerGames tab open** until JD finishes  
+| # | Do this |
+|---|---------|
+| 1 | Add e.g. `https://ankergames.net/game/…` in JD |
+| 2 | Start download → solve **Turnstile** in the browser |
+| 3 | **Keep the AnkerGames tab open** until JD finishes |
 
 No AnkerGames account in JD. No MyJDownloader.
 
 ```text
-You solve Turnstile  →  add-on fetches CDN (real browser TLS)
-                     →  streams to http://127.0.0.1/…
-                     →  JDownloader saves the file
+Turnstile (you) → companion fetches CDN → localhost → JD saves file
 ```
 
----
+</details>
 
-## Troubleshooting
+<details>
+<summary><b>🛠️ Troubleshooting</b></summary>
+
+<br/>
 
 | Problem | Fix |
 |---------|-----|
-| Pathfinder finds nothing | See [If nothing is found](#if-nothing-is-found) |
-| Plugin missing in JD | Files must be under `…/jd/plugins/…` (note the nested `jd/`) + Core patch applied |
-| Add-on missing | Step 2 again · Developer mode ON |
+| Pathfinder empty | Expand “Pathfinder finds nothing” above |
+| Plugin missing in JD | Files under `…/jd/plugins/…` + Core patch |
+| Add-on missing | Developer mode ON · reload unpacked |
 | Firefox “not verified” | Dev Edition / Nightly + signatures = false |
-| JD stuck at 0 B | Keep the AnkerGames tab open |
-| Browser downloads the ZIP itself | Don’t open `*.dlproxy.uk` · reload the add-on |
+| JD at 0 B | Keep AnkerGames tab open |
+| Browser saves the ZIP | Don’t open `*.dlproxy.uk` · reload add-on |
 
----
+</details>
 
-## Developers
+<details>
+<summary><b>👨‍💻 Developers</b></summary>
 
 ```bash
 cd companion && ./build-packages.sh
 python3 -m unittest discover -s tests -v
 ```
+
+</details>
