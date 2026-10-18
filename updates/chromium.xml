@@ -2,7 +2,7 @@
 <gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
   <app appid='haopihkkdnnohoknooliddghpanmmedj'>
     <updatecheck
-      codebase='https://github.com/benjarogit/jd2plugin-ankergames-download/releases/download/v1.4.1/jd-turnstile-companion-chromium-1.4.1.crx'
-      version='1.4.1' />
+      codebase='https://github.com/benjarogit/jd2plugin-ankergames-download/releases/download/v1.4.2/jd-turnstile-companion-chromium-1.4.2.crx'
+      version='1.4.2' />
   </app>
 </gupdate>

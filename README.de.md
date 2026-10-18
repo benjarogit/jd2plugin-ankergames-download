@@ -1,75 +1,14 @@
 # AnkerGames für JDownloader 2
 
-[Deutsch](#deutsch) · [English](README.md)
+[Deutsch](#installation) · [English](README.md)
 
-Inoffizielles **JDownloader-2**-Hoster/Crawler-Plugin plus **echte Browser-Erweiterungen** (`.crx` / `.xpi`), damit Downloads von [ankergames.net](https://ankergames.net) trotz Cloudflare funktionieren.
+Lädt Spiele von [ankergames.net](https://ankergames.net) in **JDownloader**, obwohl Cloudflare den Java-Client von JD blockiert.
 
-> Nicht verbunden mit AppWork / JDownloader. Der offizielle Support lehnt diesen Hoster ab, weil Cloudflare den Java-HTTP-Client von JD blockiert.
-
-[![Release](https://img.shields.io/github/v/release/benjarogit/jd2plugin-ankergames-download?label=release)](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest)
+**Kurz:** Du löst Captcha im Browser. Eine kleine Browser-Erweiterung schickt die Datei an JD. JD speichert und zeigt den Fortschritt.
 
 ---
 
-<a id="deutsch"></a>
-
-## Deutsch
-
-### Was du bekommst
-
-| Teil | Aufgabe |
-|------|---------|
-| **JD-Plugin** | Erkennt AnkerGames-Links, öffnet Turnstile-HITL, lädt über localhost-Relay |
-| **Browser-Companion** | Echtes Add-on — löst Turnstile, holt CDN mit **Browser-TLS**, streamt Bytes zu JD |
-| **Core-Patch** | Ergänzt Relay-Metadaten auf der Turnstile-Captcha-Seite in JD |
-
-### Unterstützte Browser
-
-| Browser | Paket | Hinweis |
-|---------|-------|---------|
-| **Chrome / Chromium / Vivaldi / Brave / Edge** | unsignierte `.crx` | Sideload / Policy — kein Web Store nötig |
-| **Firefox** | unsignierte `.xpi` | Developer Edition / Nightly (oder temporär laden) — [`companion/INSTALL-BROWSER.md`](companion/INSTALL-BROWSER.md) |
-
-Safari wird **nicht** unterstützt. Toolbar-Badge **↑** bei neuerem GitHub-Release.
-
-### So funktioniert’s
-
-Cloudflare vergleicht **TLS-Fingerprints (JA3/JA4)** mit dem User-Agent. JDownloader spricht **Java-TLS**, behauptet aber einen Browser-UA → Block. Selbst eine frische CDN-URL (`*.dlproxy.uk`) scheitert, wenn Java sie abruft.
-
-```
-┌─────────────────┐     Turnstile HITL      ┌──────────────────┐
-│  ankergames.net │ ◄─────────────────────► │ Dein Browser     │
-│  + Cloudflare   │     echtes Browser-TLS  │ + Companion      │
-└────────┬────────┘                         └────────┬─────────┘
-         │ CDN-URL (signiert)                        │ fetch(CDN)
-         │                                           │ POST-Chunks
-         │                                  ┌────────▼─────────┐
-         │                                  │ 127.0.0.1-Relay  │
-         │                                  │ AnkergamesCdnRelay│
-         │                                  └────────┬─────────┘
-         │                                           │ GET /file
-         │                                  ┌────────▼─────────┐
-         └──────────────────────────────────│  JDownloader     │
-                                            │  (Fortschritt)   │
-                                            └──────────────────┘
-```
-
-1. Spiel-URL im Linkgrabber hinzufügen.  
-2. JD öffnet lokale Turnstile-Seite → Companion öffnet den Spiel-Tab.  
-3. **Du** löst Cloudflare Turnstile einmal.  
-4. Companion bekommt die CDN-URL, blockiert Tab-Navigation dorthin (kein Browser-„Speichern unter…“) und streamt in das localhost-Relay.  
-5. JD lädt von `http://127.0.0.1:<port>/file` wie einen normalen Listeneintrag.
-
-**AnkerGames-Tab offen lassen**, bis der Stream fertig ist.
-
-### Voraussetzungen
-
-- JDownloader 2 (`JDownloader.jar` + `Core.jar`)
-- Ein unterstützter Desktop-Browser (derselbe, den JD für Captchas öffnet)
-- Plugin-Installer: Linux / macOS / Windows; Companion-Skripte: bash (unter Windows WSL/Git Bash oder `.crx`/`.xpi` manuell aus Releases)
-
-### Installation (empfohlen)
-
-Ein Assistent installiert **Plugin** und **Browser-Erweiterung**. Sprache DE/EN (Systemsprache, oder erzwingen mit `--de` / `--en`).
+## Installation
 
 ```bash
 git clone https://github.com/benjarogit/jd2plugin-ankergames-download.git
@@ -78,75 +17,57 @@ chmod +x install.sh
 ./install.sh
 ```
 
-Du wirst gefragt:
+### Was das Skript macht
 
-1. JDownloader-Plugin installieren? → **J** / **Y** (oder **n** zum Überspringen)
-2. Welcher Browser für Captchas? → einen **Namen** tippen, z. B. `vivaldi`, `chrome`, `brave`, `edge`, `firefox` oder `all`  
-   **Keine einzelne Zahl in die Shell tippen** — das ist kein Befehl.
+1. **JDownloader-Plugin** installieren → mit `J` / Enter bestätigen  
+2. **Browser** tippen: `vivaldi`, `chrome`, `brave`, `edge` oder `firefox`  
+   *(keine Zahl tippen — nur den Namen)*
 
-**Chromium-Familie:** unsignierte `.crx` — Installer per Policy, oder auf `…://extensions` ziehen (Entwicklermodus). Keine Store-Signatur nötig.
+### Browser-Erweiterung fertigmachen
 
-**Firefox:** unsignierte `.xpi` — **Developer Edition / Nightly**, `xpinstall.signatures.required` = `false`, dann *Add-on aus Datei installieren…*.  
-Schritt für Schritt (DE/EN): [`companion/INSTALL-BROWSER.md`](companion/INSTALL-BROWSER.md).  
-AMO-Signatur ist optional und für den Normalbetrieb nicht nötig ([`SIGNING.md`](companion/SIGNING.md)).
+Das Skript bereitet die Dateien vor und öffnet die richtige Seite. **Du klickst noch kurz selbst:**
 
-Eigener JD-Pfad: `JD_HOME="/pfad/zu/jdownloader" ./install.sh`
+**Vivaldi / Chrome / Brave / Edge**
 
-Windows (nur Plugin): `plugin/install.bat` / `plugin/install.ps1`, Companion aus [Releases](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest) + INSTALL-BROWSER.md.
+1. Entwicklermodus einschalten  
+2. „Entpackte Erweiterung laden“  
+3. Den Ordner wählen, den das Skript anzeigt (auch in der Zwischenablage)
 
-Stabile Chromium-ID: `haopihkkdnnohoknooliddghpanmmedj`
+**Firefox**
 
-### Updates
+1. Am besten **Firefox Developer Edition** oder **Nightly**  
+2. `about:config` → `xpinstall.signatures.required` → **false**  
+3. `about:addons` → Zahnrad → Add-on aus Datei → die `.xpi` vom Skript
 
-| Kanal | Wie |
-|-------|-----|
-| Chrome / Vivaldi / Brave / Edge | Policy / `updates/chromium.xml` + Installer erneut |
-| Firefox (unsigniert) | Badge **↑** → neue XPI → erneut aus Datei installieren |
-| Alle | Badge prüft GitHub Releases |
+Ausführlicher: [companion/INSTALL-BROWSER.md](companion/INSTALL-BROWSER.md)
 
-### Bedienung
+---
 
-1. Linkgrabber → z. B. `https://ankergames.net/game/silver-pines`  
-2. Optional: Accounts → **ankergames**  
-3. Download starten → Turnstile im Browser lösen  
-4. Spiel-Tab offen lassen, bis JD fertig ist  
-5. Fortschritt nur in JD, nicht als normaler Browser-Download
+## Benutzung
 
-### Wichtig
+1. In JDownloader Link hinzufügen, z. B. `https://ankergames.net/game/…`  
+2. Turnstile im Browser lösen  
+3. **AnkerGames-Tab offen lassen**, bis der Download in JD fertig ist  
 
-- Captcha nicht mit „Überspringen“ abbrechen, während der Companion arbeitet.  
-- `*.dlproxy.uk` nicht manuell öffnen — Java→CDN ist absichtlich gesperrt.  
-- **Denselben** Browser für Captchas und Companion nutzen.
+Denselben Browser für Captchas und Erweiterung nutzen. MyJDownloader wird **nicht** gebraucht.
 
-### Fehlerbehebung
+---
 
-| Symptom | Lösung |
+## Wenn etwas hakt
+
+| Problem | Lösung |
 |---------|--------|
-| Captcha schließt, kein Download | Companion fehlt / falscher Browser → 1.4.0+ neu installieren |
-| Firefox „konnte nicht verifiziert werden“ | Dev Edition/Nightly + `xpinstall.signatures.required=false` — `INSTALL-BROWSER.md` |
-| Browser speichert die ZIP selbst | Alten Companion aktualisieren; CDN-URL nie öffnen |
-| JD bleibt bei 0 B | AnkerGames-Tab offen lassen; Download neu starten |
-| Kein Auto-Update | Feed-URLs / Release-Assets prüfen; Badge **↑** nutzen |
+| Erweiterung nicht sichtbar | `./install.sh` → Schritt 1 mit `n`, Schritt 2 Browser nochmal; Entwicklermodus + entpackt laden |
+| Firefox „nicht verifiziert“ | Developer Edition + `xpinstall.signatures.required = false` |
+| JD bei 0 Byte | AnkerGames-Tab offen lassen; Companion v1.4.2+ |
+| Browser speichert die ZIP selbst | Companion aktualisieren; CDN-Link nicht manuell öffnen |
 
-### Paketstruktur
+---
 
-```
-plugin/          JD-Klassen + Installer
-companion/
-  chromium/      MV3-Quellcode → .crx
-  firefox/       MV2-Quellcode → .xpi
-  dist/          gebaute Pakete
-  INSTALL-BROWSER.md   unsignierte Installation (DE/EN)
-  install.sh     Companion-Installer
-core-patch/      Turnstile-HTML + Klasse für Core.jar
-updates/         GitHub-Update-Feeds
-src/             lesbare Quellen
-```
+## So funktioniert’s (kurz)
 
-### Rechtliches
+Cloudflare erkennt JDownloader (Java). Deshalb holt die **Browser-Erweiterung** die Datei und schickt sie an `127.0.0.1` — JD lädt nur lokal weiter.
 
-Nur persönlicher Gebrauch / Forschung (HITL-Captcha + Browser-TLS-Brücke). AGB von ankergames.net und lokales Recht beachten. Keine urheberrechtlich geschützten Spieldateien weiterverbreiten.
+---
 
-### Lizenz
-
-Code in diesem Repository: as-is für lokale JD-Plugin-Interoperabilität. JDownloader unterliegt der Lizenz von AppWork. Marken AnkerGames / Cloudflare gehören den jeweiligen Inhabern.
+Nicht verbunden mit AppWork / JDownloader / AnkerGames.

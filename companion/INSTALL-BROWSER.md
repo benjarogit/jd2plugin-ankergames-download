@@ -1,56 +1,8 @@
-# Browser companion — unsigned install (recommended)
+# Browser add-on — install help
 
-No app-store account needed. Safari is **not** supported.
+[Deutsch](#deutsch) · [English](#english)
 
-Language: [English](#english) · [Deutsch](#deutsch)
-
----
-
-<a id="english"></a>
-
-## English
-
-### Chrome / Chromium / Vivaldi / Brave / Edge
-
-These browsers install our **self-packed `.crx`** without the Chrome Web Store.
-
-**Easiest:** from the repo root run `./install.sh` and type `vivaldi` / `chrome` / `brave` / `edge`.  
-The script writes a managed policy and restarts the browser — the add-on appears under `…://extensions`.
-
-**Manual:**
-
-1. Open `chrome://extensions` (Vivaldi: `vivaldi://extensions`, Brave: `brave://extensions`, Edge: `edge://extensions`).
-2. Enable **Developer mode**.
-3. Drag `companion/dist/jd-turnstile-companion-chromium-*.crx` onto the page  
-   **or** use *Load unpacked* → folder `companion/chromium/`.
-4. Confirm any warning (“not from the Chrome Web Store”) — that is normal for sideloaded CRXs.
-5. Restart the browser once.
-
-Use the **same** browser JDownloader opens for captchas.
-
-### Firefox (unsigned `.xpi`)
-
-**Release Firefox** blocks unsigned add-ons by default. Use one of these:
-
-#### Option A — Firefox Developer Edition or Nightly (recommended for unsigned)
-
-1. Install [Firefox Developer Edition](https://www.mozilla.org/firefox/developer/) or Nightly.
-2. Address bar → `about:config` → accept the risk warning.
-3. Search `xpinstall.signatures.required` → set to **`false`**.
-4. `about:addons` → gear icon → **Install Add-on From File…**  
-   → choose `companion/dist/jd-turnstile-companion-firefox-*.xpi`  
-   (or `~/.local/share/jd-turnstile-companion/jd-turnstile-companion.xpi` after `./install-firefox.sh`).
-5. Confirm the install. Point JDownloader’s captcha browser to this Firefox.
-
-#### Option B — Temporary load (any Firefox, until restart)
-
-1. `about:debugging#/runtime/this-firefox`
-2. **Load Temporary Add-on…** → select `companion/firefox/manifest.json`
-3. Re-load after every browser restart.
-
-#### Option C — Mozilla-signed (optional later)
-
-Only if you want Release Firefox + auto-update without Developer Edition. See `SIGNING.md` (AMO). Not required for normal use.
+Safari is not supported.
 
 ---
 
@@ -58,44 +10,52 @@ Only if you want Release Firefox + auto-update without Developer Edition. See `S
 
 ## Deutsch
 
-### Chrome / Chromium / Vivaldi / Brave / Edge
+### Vivaldi / Chrome / Brave / Edge
 
-Diese Browser nehmen unsere **selbst gepackte `.crx`** ohne Chrome Web Store.
+Nach `./install.sh` (Browsername tippen):
 
-**Einfachste Variante:** im Repo `./install.sh` starten und `vivaldi` / `chrome` / `brave` / `edge` tippen.  
-Das Skript setzt eine Policy und startet den Browser neu — die Erweiterung steht unter `…://extensions`.
+1. Seite **Erweiterungen** ist offen  
+2. **Entwicklermodus** einschalten  
+3. **Entpackte Erweiterung laden** → Ordner  
+   `~/.local/share/jd-turnstile-companion/chromium/ext`
 
-**Manuell:**
+Fertig, wenn „JD Turnstile Companion“ in der Liste steht.
 
-1. `chrome://extensions` öffnen (Vivaldi: `vivaldi://extensions`, Brave: `brave://extensions`, Edge: `edge://extensions`).
-2. **Entwicklermodus** einschalten.
-3. `companion/dist/jd-turnstile-companion-chromium-*.crx` auf die Seite ziehen  
-   **oder** *Entpackte Erweiterung laden* → Ordner `companion/chromium/`.
-4. Warnung („nicht aus dem Chrome Web Store“) bestätigen — normal bei Sideload.
-5. Browser einmal neu starten.
+### Firefox
 
-Denselben Browser nutzen, den JDownloader für Captchas öffnet.
+Release-Firefox blockiert unsignierte Add-ons.
 
-### Firefox (unsignierte `.xpi`)
+1. **Firefox Developer Edition** oder **Nightly**  
+2. `about:config` → `xpinstall.signatures.required` = **false**  
+3. `about:addons` → Zahnrad → **Add-on aus Datei installieren**  
+   → `~/.local/share/jd-turnstile-companion/jd-turnstile-companion.xpi`
 
-**Firefox Release** blockiert unsignierte Add-ons standardmäßig. Eine der Varianten:
+Oder kurzzeitig: `about:debugging` → Temporäres Add-on → `companion/firefox/manifest.json`
 
-#### Variante A — Firefox Developer Edition oder Nightly (empfohlen ohne Signatur)
+---
 
-1. [Firefox Developer Edition](https://www.mozilla.org/firefox/developer/) oder Nightly installieren.
-2. Adresszeile → `about:config` → Warnung akzeptieren.
-3. `xpinstall.signatures.required` suchen → auf **`false`** setzen.
-4. `about:addons` → Zahnrad → **Add-on aus Datei installieren…**  
-   → `companion/dist/jd-turnstile-companion-firefox-*.xpi`  
-   (oder nach `./install-firefox.sh`: `~/.local/share/jd-turnstile-companion/jd-turnstile-companion.xpi`).
-5. Installation bestätigen. In JDownloader diesen Firefox als Captcha-Browser nutzen.
+<a id="english"></a>
 
-#### Variante B — Temporär laden (jeder Firefox, bis zum Neustart)
+## English
 
-1. `about:debugging#/runtime/this-firefox`
-2. **Temporäres Add-on laden…** → `companion/firefox/manifest.json`
-3. Nach jedem Browser-Neustart erneut laden.
+### Vivaldi / Chrome / Brave / Edge
 
-#### Variante C — Mozilla-signiert (optional später)
+After `./install.sh` (type browser name):
 
-Nur wenn du Release-Firefox ohne Developer Edition willst. Siehe `SIGNING.md` (AMO). Für den normalen Betrieb **nicht nötig**.
+1. **Extensions** page opens  
+2. Enable **Developer mode**  
+3. **Load unpacked** → folder  
+   `~/.local/share/jd-turnstile-companion/chromium/ext`
+
+Done when “JD Turnstile Companion” appears in the list.
+
+### Firefox
+
+Release Firefox blocks unsigned add-ons.
+
+1. **Firefox Developer Edition** or **Nightly**  
+2. `about:config` → `xpinstall.signatures.required` = **false**  
+3. `about:addons` → gear → **Install Add-on From File**  
+   → `~/.local/share/jd-turnstile-companion/jd-turnstile-companion.xpi`
+
+Or temporary: `about:debugging` → Load Temporary Add-on → `companion/firefox/manifest.json`

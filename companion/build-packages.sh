@@ -32,8 +32,8 @@ echo "Building Chromium ZIP v${VER} ..."
   cd "${CH}"
   zip -r -FS "${DIST}/jd-turnstile-companion-chromium-${VER}.zip" \
     manifest.json background.js update-check.js solver.js local-hook.js ankergames-hook.js cdn-pipe.js \
-    dnr-rules.json icons icon48.png \
-    -x "*.md" -x ".git*"
+    icons icon48.png \
+    -x "*.md" -x ".git*" -x "dnr-rules.json" -x "cdn-blocked.html"
 )
 
 # Pack CRX with stable private key (Vivaldi/Chrome drag-install / policy install)

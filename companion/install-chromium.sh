@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Auto-install JD Turnstile Companion into Chromium browsers (Chrome / Edge / Brave / Vivaldi).
-# On Linux, ExtensionInstallForcelist + local file:// CRX installs silently (no Web Store, no drag-drop).
+# Prepare Chromium-family companion and guide a reliable 2-click install.
+# Policy force-install is attempted as a bonus; Load unpacked always works.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 DIST="${ROOT}/dist"
-REPO_UPDATES_URL="https://raw.githubusercontent.com/benjarogit/jd2plugin-ankergames-download/main/updates/chromium.xml"
 VER="$(python3 -c "import json; print(json.load(open('${ROOT}/chromium/manifest.json'))['version'])")"
 EXT_ID="$(tr -d '[:space:]' < "${ROOT}/signing/chromium-extension-id.txt")"
 ZIP="${DIST}/jd-turnstile-companion-chromium-${VER}.zip"
 CRX="${DIST}/jd-turnstile-companion-chromium-${VER}.crx"
+BROWSER_HINT="${1:-}"
 
 lang=en
 case "${LANG:-}${LC_ALL:-}" in
@@ -17,31 +17,30 @@ case "${LANG:-}${LC_ALL:-}" in
 esac
 
 chmod +x "${ROOT}/build-packages.sh"
-"${ROOT}/build-packages.sh"
+"${ROOT}/build-packages.sh" >/dev/null
 
 INSTALL_DIR="${HOME}/.local/share/jd-turnstile-companion/chromium"
+EXT_DIR="${INSTALL_DIR}/ext"
 mkdir -p "${INSTALL_DIR}"
+rm -rf "${EXT_DIR}"
+mkdir -p "${EXT_DIR}"
+
+# Always keep an unpacked copy — most reliable install method
+if [[ -f "${ZIP}" ]]; then
+  unzip -qo "${ZIP}" -d "${EXT_DIR}"
+else
+  # Fallback: copy source tree
+  cp -a "${ROOT}/chromium/." "${EXT_DIR}/"
+  rm -f "${EXT_DIR}/README.md" 2>/dev/null || true
+fi
 
 if [[ -f "${CRX}" ]]; then
   cp -f "${CRX}" "${INSTALL_DIR}/companion.crx"
-elif [[ -f "${ZIP}" ]]; then
-  echo "WARN: no .crx — packing required a Chrome/Vivaldi binary with a display."
-  rm -rf "${INSTALL_DIR}/ext"
-  mkdir -p "${INSTALL_DIR}/ext"
-  unzip -qo "${ZIP}" -d "${INSTALL_DIR}/ext"
-else
-  echo "ERROR: no chromium package built"
-  exit 1
 fi
 
-[[ -f "${INSTALL_DIR}/companion.crx" ]] || {
-  echo "ERROR: companion.crx missing — cannot auto-install without a packed CRX."
-  exit 1
-}
-
-# Local Omaha feed — browsers install from this file:// URL (works on Linux without Web Store).
-LOCAL_UPDATES="file://${INSTALL_DIR}/updates.xml"
-cat > "${INSTALL_DIR}/updates.xml" <<EOF
+# Bonus: managed policy (may auto-install on some Linux Chromium builds)
+if [[ -f "${INSTALL_DIR}/companion.crx" ]]; then
+  cat > "${INSTALL_DIR}/updates.xml" <<EOF
 <?xml version='1.0' encoding='UTF-8'?>
 <gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
   <app appid='${EXT_ID}'>
@@ -49,126 +48,121 @@ cat > "${INSTALL_DIR}/updates.xml" <<EOF
   </app>
 </gupdate>
 EOF
-
-# Also keep a copy that points at GitHub for later manual checks
-cat > "${INSTALL_DIR}/updates-github.xml" <<EOF
-<?xml version='1.0' encoding='UTF-8'?>
-<gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
-  <app appid='${EXT_ID}'>
-    <updatecheck
-      codebase='https://github.com/benjarogit/jd2plugin-ankergames-download/releases/download/v${VER}/jd-turnstile-companion-chromium-${VER}.crx'
-      version='${VER}' />
-  </app>
-</gupdate>
-EOF
-
-write_policy() {
-  local policy_dir="$1"
-  local browser_name="$2"
-  mkdir -p "${policy_dir}"
-  local policy_file="${policy_dir}/jd-turnstile-companion.json"
-  cat > "${policy_file}" <<EOF
+  LOCAL_UPDATES="file://${INSTALL_DIR}/updates.xml"
+  for policy_dir in \
+    "${HOME}/.config/google-chrome/policies/managed" \
+    "${HOME}/.config/chromium/policies/managed" \
+    "${HOME}/.config/brave/policies/managed" \
+    "${HOME}/.config/brave-browser/policies/managed" \
+    "${HOME}/.config/microsoft-edge/policies/managed" \
+    "${HOME}/.config/vivaldi/policies/managed"
+  do
+    mkdir -p "${policy_dir}"
+    cat > "${policy_dir}/jd-turnstile-companion.json" <<EOF
 {
-  "ExtensionInstallSources": [
-    "file://*",
-    "https://github.com/*",
-    "https://*.githubusercontent.com/*",
-    "https://raw.githubusercontent.com/*"
-  ],
   "ExtensionInstallAllowlist": ["${EXT_ID}"],
   "ExtensionInstallForcelist": ["${EXT_ID};${LOCAL_UPDATES}"],
-  "ExtensionSettings": {
-    "${EXT_ID}": {
-      "installation_mode": "force_installed",
-      "update_url": "${LOCAL_UPDATES}",
-      "toolbar_pin": "default_unpinned",
-      "override_update_url": true
-    }
-  }
+  "ExtensionInstallSources": ["file://*"]
 }
 EOF
-  echo "  OK ${browser_name}: ${policy_file}"
-}
-
-# Optional: classic External Extensions JSON (some Chromium builds honor this too)
-write_external() {
-  local ext_dir="$1"
-  local browser_name="$2"
-  mkdir -p "${ext_dir}"
-  cat > "${ext_dir}/${EXT_ID}.json" <<EOF
-{
-  "external_crx": "${INSTALL_DIR}/companion.crx",
-  "external_version": "${VER}"
-}
-EOF
-  echo "  OK external ${browser_name}: ${ext_dir}/${EXT_ID}.json"
-}
-
-if [[ "${lang}" == de ]]; then
-  echo "=== Chromium-Companion v${VER} — automatische Installation ==="
-  echo "Extension-ID: ${EXT_ID}"
-  echo "Lokal: ${INSTALL_DIR}/companion.crx"
-else
-  echo "=== Chromium companion v${VER} — automatic install ==="
-  echo "Extension id: ${EXT_ID}"
-  echo "Local: ${INSTALL_DIR}/companion.crx"
+  done
 fi
 
-write_policy "${HOME}/.config/google-chrome/policies/managed" "Chrome"
-write_policy "${HOME}/.config/chromium/policies/managed" "Chromium"
-write_policy "${HOME}/.config/brave/policies/managed" "Brave"
-write_policy "${HOME}/.config/brave-browser/policies/managed" "Brave (alt)"
-write_policy "${HOME}/.config/microsoft-edge/policies/managed" "Edge"
-write_policy "${HOME}/.config/vivaldi/policies/managed" "Vivaldi"
-write_policy "${HOME}/.var/app/com.vivaldi.Vivaldi/config/vivaldi/policies/managed" "Vivaldi Flatpak"
-write_policy "${HOME}/.var/app/com.google.Chrome/config/google-chrome/policies/managed" "Chrome Flatpak"
-write_policy "${HOME}/.var/app/com.brave.Browser/config/BraveSoftware/Brave-Browser/policies/managed" "Brave Flatpak"
-
-write_external "${HOME}/.config/google-chrome/External Extensions" "Chrome" || true
-write_external "${HOME}/.config/chromium/External Extensions" "Chromium" || true
-write_external "${HOME}/.config/vivaldi/External Extensions" "Vivaldi" || true
-write_external "${HOME}/.config/brave/External Extensions" "Brave" || true
-write_external "${HOME}/.config/microsoft-edge/External Extensions" "Edge" || true
-
-# Soft-restart browser so managed policy is applied (user session)
-restart_browser() {
-  local bin="$1"
-  command -v "${bin}" >/dev/null 2>&1 || return 0
-  if pgrep -x "${bin}" >/dev/null 2>&1 || pgrep -f "${bin}" >/dev/null 2>&1; then
-    if [[ "${lang}" == de ]]; then
-      echo "Starte ${bin} neu, damit die Policy greift…"
-    else
-      echo "Restarting ${bin} so the policy applies…"
-    fi
-    pkill -x "${bin}" 2>/dev/null || pkill -f "/${bin}" 2>/dev/null || true
-    sleep 2
-  fi
-  nohup "${bin}" >/dev/null 2>&1 &
-  echo "  started ${bin}"
+# Pick browser binary + extensions URL
+pick_browser() {
+  local want="${BROWSER_HINT:-}"
+  want="$(printf '%s' "${want}" | tr '[:upper:]' '[:lower:]')"
+  case "${want}" in
+    chrome|google-chrome) echo "google-chrome-stable|chrome://extensions" ; return ;;
+    chromium) echo "chromium|chrome://extensions" ; return ;;
+    brave) echo "brave-browser|brave://extensions" ; return ;;
+    edge) echo "microsoft-edge|edge://extensions" ; return ;;
+    vivaldi|"") echo "vivaldi|vivaldi://extensions" ; return ;;
+  esac
+  echo "vivaldi|vivaldi://extensions"
 }
 
-echo
-# Prefer the browser the user actually runs
-for bin in vivaldi google-chrome-stable google-chrome chromium brave-browser microsoft-edge; do
-  if command -v "${bin}" >/dev/null 2>&1; then
-    restart_browser "${bin}"
+IFS='|' read -r BIN EXT_URL <<<"$(pick_browser)"
+for try in "${BIN}" google-chrome-stable google-chrome chromium vivaldi brave-browser microsoft-edge; do
+  if command -v "${try}" >/dev/null 2>&1; then
+    BIN="${try}"
     break
   fi
 done
 
+# Clipboard helper
+if command -v wl-copy >/dev/null 2>&1; then
+  printf '%s' "${EXT_DIR}" | wl-copy 2>/dev/null || true
+elif command -v xclip >/dev/null 2>&1; then
+  printf '%s' "${EXT_DIR}" | xclip -selection clipboard 2>/dev/null || true
+fi
+
 echo
 if [[ "${lang}" == de ]]; then
-  echo "Fertig. Die Erweiterung sollte ohne Drag&Drop erscheinen."
-  echo "Prüfen: vivaldi://extensions  oder  chrome://extensions"
-  echo "  → „JD Turnstile Companion“ v${VER} (ID ${EXT_ID})"
-  echo "Falls sie fehlt: Browser einmal komplett beenden und neu öffnen."
-  echo "  Kontrolle der Policy: chrome://policy  (ExtensionInstallForcelist)"
-  echo "Updates: Installer erneut ausführen, oder später GitHub-Feed ${REPO_UPDATES_URL}"
+  cat <<EOF
+============================================================
+  Browser-Erweiterung v${VER}  (Chrome / Vivaldi / Brave / Edge)
+============================================================
+
+Ordner ist vorbereitet (Pfad liegt in der Zwischenablage, falls möglich):
+
+  ${EXT_DIR}
+
+Mach JETZT im Browser diese 3 Schritte:
+
+  1) Seite „Erweiterungen“ ist gleich offen
+  2) Rechts oben:  Entwicklermodus  EINSCHALTEN
+  3) „Entpackte Erweiterung laden“  →  diesen Ordner wählen:
+       ${EXT_DIR}
+
+Falls die Erweiterung schon da ist: einmal „Aktualisieren“ klicken.
+Danach sollte stehen:  JD Turnstile Companion  ${VER}
+
+(Die .crx-Policy wird zusätzlich gesetzt — bei manchen Browsern
+ reicht ein Neustart. Der sichere Weg sind die 3 Schritte oben.)
+============================================================
+EOF
 else
-  echo "Done. The add-on should appear without drag-and-drop."
-  echo "Check: vivaldi://extensions  or  chrome://extensions"
-  echo "  → “JD Turnstile Companion” v${VER} (id ${EXT_ID})"
-  echo "If missing: fully quit the browser and open it again."
-  echo "  Policy check: chrome://policy  (ExtensionInstallForcelist)"
-  echo "Updates: re-run this installer, or GitHub feed ${REPO_UPDATES_URL}"
+  cat <<EOF
+============================================================
+  Browser add-on v${VER}  (Chrome / Vivaldi / Brave / Edge)
+============================================================
+
+Folder is ready (path copied to clipboard if possible):
+
+  ${EXT_DIR}
+
+Do these 3 steps in the browser NOW:
+
+  1) The Extensions page will open
+  2) Top-right: turn ON  Developer mode
+  3) “Load unpacked”  →  select this folder:
+       ${EXT_DIR}
+
+If it is already listed: click Reload once.
+You should see:  JD Turnstile Companion  ${VER}
+
+(A .crx policy is also written — some browsers pick it up after
+ a restart. The reliable path is the 3 steps above.)
+============================================================
+EOF
+fi
+
+if command -v "${BIN}" >/dev/null 2>&1; then
+  nohup "${BIN}" "${EXT_URL}" >/dev/null 2>&1 &
+  sleep 1
+fi
+
+echo
+if [[ "${lang}" == de ]]; then
+  read -r -p "Enter drücken, wenn die Erweiterung sichtbar ist… " _
+else
+  read -r -p "Press Enter when the add-on is visible… " _
+fi
+
+echo
+if [[ "${lang}" == de ]]; then
+  echo "OK. Denselben Browser für JDownloader-Captchas nutzen."
+else
+  echo "OK. Use this same browser for JDownloader captchas."
 fi
