@@ -1,18 +1,10 @@
 # JD Turnstile Companion — Chromium family
 
-Installable **`.crx`** for **Chrome, Chromium, Vivaldi, Brave, Edge** (not “Load unpacked”).
+Unsigned **`.crx`** for Chrome, Chromium, Vivaldi, Brave, Edge.
 
 ```bash
-cd companion
-./install-chromium.sh
-# or: ./install.sh → [2]
+cd companion && ./install-chromium.sh
+# or from repo root: ./install.sh → type vivaldi / chrome / …
 ```
 
-- Package: `dist/jd-turnstile-companion-chromium-*.crx`
-- Extension id: `haopihkkdnnohoknooliddghpanmmedj`
-- Auto-update feed: [`updates/chromium.xml`](../../updates/chromium.xml) (GitHub Releases)
-- Fallback: toolbar badge **↑** when a newer release exists
-
-Safari: see [`../safari/README.md`](../safari/README.md) (macOS + Apple Developer).
-
-See root [README.md](../../README.md) / [README.de.md](../../README.de.md).
+Full steps (EN/DE): [INSTALL-BROWSER.md](../INSTALL-BROWSER.md)

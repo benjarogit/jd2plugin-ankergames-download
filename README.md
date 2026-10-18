@@ -25,16 +25,12 @@ Unofficial **JDownloader 2** hoster/crawler plugin + **real browser extensions**
 
 ### Supported browsers
 
-| Browser | Package | Auto-update via GitHub |
-|---------|---------|------------------------|
-| **Chrome / Chromium** | `.crx` + policy | Yes — `updates/chromium.xml` |
-| **Vivaldi** | `.crx` + policy | Yes |
-| **Brave** | `.crx` + policy | Yes |
-| **Edge** | `.crx` + policy | Yes |
-| **Firefox** | `.xpi` | Yes **if Mozilla-signed** — `updates/firefox.json`; otherwise badge **↑** |
-| **Safari** | Safari Web Extension (build on macOS) | No CRX feed — see [`companion/safari/README.md`](companion/safari/README.md) |
+| Browser | Package | Notes |
+|---------|---------|--------|
+| **Chrome / Chromium / Vivaldi / Brave / Edge** | unsigned `.crx` | Sideload / policy — no Web Store needed |
+| **Firefox** | unsigned `.xpi` | Developer Edition / Nightly (or temporary load) — see [`companion/INSTALL-BROWSER.md`](companion/INSTALL-BROWSER.md) |
 
-All companions also poll the **GitHub Releases API** and show a toolbar badge **↑** when a newer version exists (opens the release page).
+Safari is **not** supported. Companions also show a toolbar badge **↑** when a newer GitHub Release exists.
 
 ### How it works
 
@@ -89,35 +85,25 @@ You will be asked:
 2. Which browser for captchas? → type a **name**, e.g. `vivaldi`, `chrome`, `brave`, `edge`, `firefox`, or `all`  
    **Do not type a lone number into the shell** — that is not a command.
 
-**Chromium family (Vivaldi/Chrome/Brave/Edge):** the add-on is **force-installed automatically** via a local managed policy (no drag-and-drop). The installer restarts the browser.
+**Chromium family:** unsigned `.crx` — installer force-installs via policy, or drag onto `…://extensions` (Developer mode). Store signing not required.
 
-**Firefox Release:** Mozilla requires a **signature**. Set free AMO API keys once (`AMO_JWT_ISSUER` / `AMO_JWT_SECRET`) and re-run the Firefox step — see [`companion/SIGNING.md`](companion/SIGNING.md). Until then, use Developer Edition or install the XPI manually.
+**Firefox:** unsigned `.xpi` — use **Developer Edition / Nightly**, set `xpinstall.signatures.required` = `false`, then *Install Add-on From File…*.  
+Step-by-step (EN/DE): [`companion/INSTALL-BROWSER.md`](companion/INSTALL-BROWSER.md).  
+AMO signing is optional and not needed for normal use ([`SIGNING.md`](companion/SIGNING.md)).
 
 Custom JD path: `JD_HOME="/path/to/jdownloader" ./install.sh`
 
-Windows (plugin only): `plugin/install.bat` or `plugin/install.ps1`, then install the companion from [Releases](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest).
+Windows (plugin only): `plugin/install.bat` or `plugin/install.ps1`, then companion from [Releases](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest) + INSTALL-BROWSER.md.
 
-**Manual companion from Releases**
+Stable Chromium id: `haopihkkdnnohoknooliddghpanmmedj`
 
-| Browser | File | Action |
-|---------|------|--------|
-| Chromium family | `*-chromium-*.crx` | Developer mode → drag onto `…://extensions` → restart |
-| Firefox | `*-firefox-*.xpi` | `about:addons` → gear → *Install Add-on From File…* |
+### Updates
 
-Stable Chromium id: `haopihkkdnnohoknooliddghpanmmedj`  
-Firefox signing: [`companion/SIGNING.md`](companion/SIGNING.md) · Safari: [`companion/safari/README.md`](companion/safari/README.md)
-
-### Updates — automatic or not?
-
-| Channel | Automatic? | Mechanism |
-|---------|------------|-----------|
-| Chrome / Vivaldi / Brave / Edge | **Yes** | Native `update_url` → [`updates/chromium.xml`](updates/chromium.xml) → GitHub Release `.crx` |
-| Firefox (signed) | **Yes** | `gecko.update_url` → [`updates/firefox.json`](updates/firefox.json) → Release `.xpi` |
-| Firefox (unsigned / Dev Edition) | Badge only | Toolbar **↑** → open Release page → reinstall XPI |
-| Safari | Manual / App Store | No GitHub CRX feed |
-| All browsers | Badge fallback | Polls GitHub Releases API every few hours |
-
-When we publish a new Release, a GitHub Action refreshes the update feeds on `main`.
+| Channel | How |
+|---------|-----|
+| Chrome / Vivaldi / Brave / Edge | Policy / `updates/chromium.xml` + re-run installer |
+| Firefox (unsigned) | Toolbar badge **↑** → download new XPI → install from file again |
+| All | Badge polls GitHub Releases |
 
 ### Usage
 
@@ -138,7 +124,7 @@ When we publish a new Release, a GitHub Action refreshes the update feeds on `ma
 | Symptom | Fix |
 |---------|-----|
 | Captcha closes, no download | Companion missing / wrong browser → reinstall 1.4.0+ |
-| Firefox “could not be verified” | Sign XPI or use Developer Edition — `SIGNING.md` |
+| Firefox “could not be verified” | Use Dev Edition/Nightly + `xpinstall.signatures.required=false` — `INSTALL-BROWSER.md` |
 | Browser downloads the ZIP itself | Old companion → update; never open CDN URL |
 | JD stuck at 0 B | Keep AnkerGames tab open; restart download |
 | No auto-update | Check feed URLs / Release assets; use badge **↑** |
@@ -150,11 +136,11 @@ plugin/          JD classes + installers
 companion/
   chromium/      MV3 source → .crx
   firefox/       MV2 source → .xpi
-  safari/        conversion notes (macOS)
   dist/          built packages
-  install.sh     one-shot installer
+  INSTALL-BROWSER.md   unsigned install (EN/DE)
+  install.sh     companion installer
 core-patch/      Turnstile HTML + class for Core.jar
-updates/         GitHub auto-update feeds
+updates/         GitHub update feeds
 src/             readable sources
 ```
 

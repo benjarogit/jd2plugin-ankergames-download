@@ -13,18 +13,22 @@ esac
 [[ "${1:-}" == "--en" ]] && lang=en && shift
 
 if [[ "${lang}" == de ]]; then
-  echo "JD Turnstile Companion — nur Browser-Erweiterung"
+  echo "JD Turnstile Companion — Browser-Erweiterung"
   echo
-  echo "Welchen Browser nutzt du? Tippe den Namen (keine Nummer):"
+  echo "Welchen Browser? Tippe den Namen (keine Nummer):"
   echo "  vivaldi | chrome | brave | edge | firefox | all | skip"
+  echo
+  echo "Hinweis unsigniert: companion/INSTALL-BROWSER.md"
 else
-  echo "JD Turnstile Companion — browser add-on only"
+  echo "JD Turnstile Companion — browser add-on"
   echo
-  echo "Which browser do you use? Type the name (not a number):"
+  echo "Which browser? Type the name (not a number):"
   echo "  vivaldi | chrome | brave | edge | firefox | all | skip"
+  echo
+  echo "Unsigned install help: companion/INSTALL-BROWSER.md"
 fi
 echo
-read -r -p "$([[ "${lang}" == de ]] && echo 'Browser [vivaldi]: ' || echo 'Browser [vivaldi]: ')" browser
+read -r -p "Browser [vivaldi]: " browser
 browser="$(printf '%s' "${browser:-vivaldi}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
 
 case "${browser}" in

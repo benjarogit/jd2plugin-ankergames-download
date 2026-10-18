@@ -1,15 +1,10 @@
 # JD Turnstile Companion — Firefox
 
-Installable **`.xpi`** (not a temporary debugging add-on).
+Unsigned **`.xpi`**. Prefer Firefox Developer Edition / Nightly:
 
-```bash
-cd companion
-./install-firefox.sh
-# or: ./install.sh → [1]
-```
+1. `about:config` → `xpinstall.signatures.required` = `false`
+2. `about:addons` → Install Add-on From File → `dist/*.xpi`
 
-- Package: `dist/jd-turnstile-companion-firefox-*.xpi`
-- Auto-update feed: [`updates/firefox.json`](../../updates/firefox.json) (requires Mozilla-signed XPI)
-- Fallback: toolbar badge **↑** when a newer [GitHub Release](https://github.com/benjarogit/jd2plugin-ankergames-download/releases) exists
+Or temporary: `about:debugging` → Load Temporary Add-on → this folder’s `manifest.json`.
 
-See root [README.md](../../README.md) / [README.de.md](../../README.de.md).
+Full steps (EN/DE): [INSTALL-BROWSER.md](../INSTALL-BROWSER.md)

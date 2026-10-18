@@ -1,21 +1,20 @@
 #!/usr/bin/env bash
-# Install JD Turnstile Companion into Firefox.
-# Release Firefox only auto-installs *Mozilla-signed* XPIs (enterprise policy or file install).
-# This script: signs via AMO if credentials exist, then force-installs via policies.json.
+# Prepare Firefox companion (.xpi) and print clear unsigned-install steps.
+# Optional: if AMO_JWT_* is set, also try Mozilla signing for Release Firefox.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 DIST="${ROOT}/dist"
 VER="$(python3 -c "import json; print(json.load(open('${ROOT}/firefox/manifest.json'))['version'])")"
 XPI_UNSIGNED="${DIST}/jd-turnstile-companion-firefox-${VER}.xpi"
-XPI_SIGNED="${DIST}/jd-turnstile-companion-firefox-${VER}-signed.xpi"
 ADDON_ID="jd-turnstile-companion@benjarogit.github.io"
-UPDATE_JSON="https://raw.githubusercontent.com/benjarogit/jd2plugin-ankergames-download/main/updates/firefox.json"
 
 lang=en
 case "${LANG:-}${LC_ALL:-}" in
   [Dd][Ee]*|*[Dd]eutsch*) lang=de ;;
 esac
+[[ "${1:-}" == "--de" ]] && lang=de && shift
+[[ "${1:-}" == "--en" ]] && lang=en && shift
 
 chmod +x "${ROOT}/build-packages.sh"
 "${ROOT}/build-packages.sh" >/dev/null
@@ -23,184 +22,89 @@ chmod +x "${ROOT}/build-packages.sh"
 
 INSTALL_DIR="${HOME}/.local/share/jd-turnstile-companion"
 mkdir -p "${INSTALL_DIR}"
+cp -f "${XPI_UNSIGNED}" "${INSTALL_DIR}/jd-turnstile-companion.xpi"
+XPI_FILE="${INSTALL_DIR}/jd-turnstile-companion.xpi"
 
-XPI_USE="${XPI_UNSIGNED}"
-
-# --- optional AMO signing (makes Release Firefox accept + auto-update) ---
-try_sign() {
-  if [[ -f "${XPI_SIGNED}" ]]; then
-    XPI_USE="${XPI_SIGNED}"
-    return 0
-  fi
-  if [[ -z "${AMO_JWT_ISSUER:-}" || -z "${AMO_JWT_SECRET:-}" ]]; then
-    return 1
-  fi
+# Optional AMO sign (not required)
+if [[ -n "${AMO_JWT_ISSUER:-}" && -n "${AMO_JWT_SECRET:-}" ]]; then
   if [[ "${lang}" == de ]]; then
-    echo "Signiere XPI über AMO (unlisted)…"
+    echo "Optional: AMO-Signatur wird versucht…"
   else
-    echo "Signing XPI via AMO (unlisted)…"
+    echo "Optional: trying AMO signature…"
   fi
   npx --yes web-ext sign \
     --source-dir "${ROOT}/firefox" \
     --channel unlisted \
     --api-key "${AMO_JWT_ISSUER}" \
     --api-secret "${AMO_JWT_SECRET}" \
-    --artifacts-dir "${DIST}" || return 1
-  # web-ext names vary; pick newest .xpi that is not our unsigned build name only
-  local newest
-  newest="$(ls -t "${DIST}"/*.xpi 2>/dev/null | head -1 || true)"
-  if [[ -n "${newest}" ]]; then
-    cp -f "${newest}" "${XPI_SIGNED}"
-    XPI_USE="${XPI_SIGNED}"
-    return 0
-  fi
-  return 1
-}
-
-SIGNED=0
-if try_sign; then
-  SIGNED=1
-elif [[ -f "${XPI_SIGNED}" ]]; then
-  XPI_USE="${XPI_SIGNED}"
-  SIGNED=1
+    --artifacts-dir "${DIST}" \
+    --timeout 120000 \
+    && {
+      newest="$(ls -t "${DIST}"/*.xpi 2>/dev/null | head -1 || true)"
+      [[ -n "${newest}" ]] && cp -f "${newest}" "${XPI_FILE}"
+    } || true
 fi
 
-cp -f "${XPI_USE}" "${INSTALL_DIR}/jd-turnstile-companion.xpi"
-XPI_FILE="${INSTALL_DIR}/jd-turnstile-companion.xpi"
-INSTALL_URL="file://${XPI_FILE}"
-
-write_firefox_policies() {
-  local policy_file="$1"
-  mkdir -p "$(dirname "${policy_file}")"
-  # Merge-friendly single-purpose file when using /etc drop-in style; for policies.json replace carefully
-  python3 - <<PY
-import json, os
-path = "${policy_file}"
-addon = "${ADDON_ID}"
-url = "${INSTALL_URL}"
-data = {}
-if os.path.isfile(path):
-    try:
-        data = json.load(open(path))
-    except Exception:
-        data = {}
-policies = data.setdefault("policies", {})
-ext = policies.setdefault("ExtensionSettings", {})
-ext[addon] = {
-    "installation_mode": "force_installed",
-    "install_url": url,
-}
-# Allow install from file
-sources = policies.setdefault("ExtensionInstallForcelist", [])
-# Firefox uses ExtensionSettings primarily
-open(path, "w").write(json.dumps(data, indent=2) + "\n")
-print(path)
-PY
-}
-
-if [[ "${lang}" == de ]]; then
-  echo "=== Firefox-Companion v${VER} ==="
-else
-  echo "=== Firefox companion v${VER} ==="
-fi
-echo "XPI: ${XPI_FILE}"
-echo "Signed: ${SIGNED} (1=yes)"
-
-# User-writable locations some Firefox builds read + system path via sudo
-USER_POLICY="${HOME}/.mozilla/policies/policies.json"
-write_firefox_policies "${USER_POLICY}"
-echo "  OK user policy: ${USER_POLICY}"
-
-# System policy (most reliable on Linux Release Firefox)
-SYS_POLICY="/etc/firefox/policies/policies.json"
-if [[ -w "/etc/firefox/policies" ]] || sudo -n true 2>/dev/null; then
-  if [[ "${lang}" == de ]]; then
-    echo "Schreibe System-Policy (sudo)…"
-  else
-    echo "Writing system policy (sudo)…"
+FIREFOX=""
+for bin in firefox-developer-edition firefox-nightly firefox firefox-bin; do
+  if command -v "${bin}" >/dev/null 2>&1; then
+    FIREFOX="${bin}"
+    break
   fi
-  sudo mkdir -p /etc/firefox/policies
-  TMP_POL="$(mktemp)"
-  write_firefox_policies "${TMP_POL}"
-  if [[ -f "${SYS_POLICY}" ]]; then
-    # merge with existing
-    sudo python3 - <<PY
-import json
-sys_p = "${SYS_POLICY}"
-new_p = "${TMP_POL}"
-try:
-    a = json.load(open(sys_p))
-except Exception:
-    a = {"policies": {}}
-b = json.load(open(new_p))
-a.setdefault("policies", {}).setdefault("ExtensionSettings", {}).update(
-    b.get("policies", {}).get("ExtensionSettings", {})
-)
-open("/tmp/jd-ff-policies-merged.json", "w").write(json.dumps(a, indent=2) + "\n")
-PY
-    sudo cp /tmp/jd-ff-policies-merged.json "${SYS_POLICY}"
-  else
-    sudo cp "${TMP_POL}" "${SYS_POLICY}"
-  fi
-  rm -f "${TMP_POL}"
-  echo "  OK system policy: ${SYS_POLICY}"
-else
-  if [[ "${lang}" == de ]]; then
-    echo "Hinweis: ohne sudo keine System-Policy unter /etc/firefox/policies/"
-    echo "  Einmalig: sudo mkdir -p /etc/firefox/policies && sudo cp ${USER_POLICY} ${SYS_POLICY}"
-  else
-    echo "Note: without sudo, no system policy at /etc/firefox/policies/"
-    echo "  Once: sudo mkdir -p /etc/firefox/policies && sudo cp ${USER_POLICY} ${SYS_POLICY}"
-  fi
-fi
-
-# Restart Firefox
-if pgrep -x firefox >/dev/null 2>&1; then
-  if [[ "${lang}" == de ]]; then
-    echo "Starte Firefox neu…"
-  else
-    echo "Restarting Firefox…"
-  fi
-  pkill -x firefox 2>/dev/null || true
-  sleep 2
-fi
-if command -v firefox >/dev/null 2>&1; then
-  nohup firefox >/dev/null 2>&1 &
-fi
+done
 
 echo
-if [[ "${SIGNED}" -eq 1 ]]; then
-  if [[ "${lang}" == de ]]; then
-    echo "Signiertes XPI + Policy gesetzt → Auto-Install nach Firefox-Neustart."
-    echo "Prüfen: about:addons"
-  else
-    echo "Signed XPI + policy set → auto-install after Firefox restart."
-    echo "Check: about:addons"
-  fi
+if [[ "${lang}" == de ]]; then
+  cat <<EOF
+=== Firefox-Companion v${VER} ===
+XPI bereit: ${XPI_FILE}
+Add-on-ID: ${ADDON_ID}
+
+Unsigniert installieren (empfohlen — keine AMO-Keys nötig):
+
+  1) Firefox Developer Edition oder Nightly nutzen
+     (Release-Firefox blockiert unsignierte Add-ons.)
+  2) about:config  →  xpinstall.signatures.required  →  false
+  3) about:addons  →  Zahnrad  →  „Add-on aus Datei installieren…“
+     → Datei wählen: ${XPI_FILE}
+  4) In JDownloader denselben Firefox für Captchas einstellen
+
+Alternativ (nur bis zum Neustart):
+  about:debugging#/runtime/this-firefox
+  → „Temporäres Add-on laden…“ → companion/firefox/manifest.json
+
+Ausführlich: companion/INSTALL-BROWSER.md
+EOF
 else
+  cat <<EOF
+=== Firefox companion v${VER} ===
+XPI ready: ${XPI_FILE}
+Add-on id: ${ADDON_ID}
+
+Install unsigned (recommended — no AMO keys):
+
+  1) Use Firefox Developer Edition or Nightly
+     (Release Firefox blocks unsigned add-ons.)
+  2) about:config  →  xpinstall.signatures.required  →  false
+  3) about:addons  →  gear  →  “Install Add-on From File…”
+     → pick: ${XPI_FILE}
+  4) Point JDownloader captchas at that same Firefox
+
+Alternative (until browser restart only):
+  about:debugging#/runtime/this-firefox
+  → “Load Temporary Add-on…” → companion/firefox/manifest.json
+
+Details: companion/INSTALL-BROWSER.md
+EOF
+fi
+
+if [[ -n "${FIREFOX}" ]]; then
+  nohup "${FIREFOX}" "file://${XPI_FILE}" >/dev/null 2>&1 &
   if [[ "${lang}" == de ]]; then
-    echo "XPI ist NOCH NICHT Mozilla-signiert — Release-Firefox blockiert Auto-Install."
     echo
-    echo "Damit es automatisch geht (einmalig, kostenlos):"
-    echo "  1) https://addons.mozilla.org/developers/addon/api/key/"
-    echo "  2) export AMO_JWT_ISSUER='…'"
-    echo "  3) export AMO_JWT_SECRET='…'"
-    echo "  4) ./install-firefox.sh   # signiert und installiert"
-    echo
-    echo "Sofort ohne Signatur: Firefox Developer Edition,"
-    echo "  about:config → xpinstall.signatures.required = false"
-    echo "  dann: about:addons → Zahnrad → Add-on aus Datei → ${XPI_FILE}"
+    echo "Geöffnet: ${FIREFOX} mit der XPI — Dialog bestätigen (nur wenn Signaturen aus sind)."
   else
-    echo "XPI is NOT Mozilla-signed yet — Release Firefox blocks auto-install."
     echo
-    echo "To make it automatic (one-time, free):"
-    echo "  1) https://addons.mozilla.org/developers/addon/api/key/"
-    echo "  2) export AMO_JWT_ISSUER='…'"
-    echo "  3) export AMO_JWT_SECRET='…'"
-    echo "  4) ./install-firefox.sh   # signs and installs"
-    echo
-    echo "Immediate without signing: Firefox Developer Edition,"
-    echo "  about:config → xpinstall.signatures.required = false"
-    echo "  then: about:addons → gear → Install from file → ${XPI_FILE}"
+    echo "Opened ${FIREFOX} with the XPI — confirm if signature checks are disabled."
   fi
 fi

@@ -109,14 +109,14 @@ echo "  $(T 'DONE' 'FERTIG')"
 echo "=============================================="
 echo
 echo "  $(T 'Browser add-on:' 'Browser-Erweiterung:')"
-echo "  • Chrome/Vivaldi/Brave/Edge: $(T 'should install automatically via policy (browser was restarted).' 'sollte per Policy automatisch installiert sein (Browser wurde neu gestartet).')"
-echo "    $(T 'Check' 'Prüfen'): vivaldi://extensions / chrome://extensions / chrome://policy"
-echo "  • Firefox Release: $(T 'needs a free Mozilla signature once — see companion/SIGNING.md' 'braucht einmalig eine kostenlose Mozilla-Signatur — siehe companion/SIGNING.md')"
-echo "    $(T 'Or set AMO_JWT_ISSUER + AMO_JWT_SECRET and re-run step 2.' 'Oder AMO_JWT_ISSUER + AMO_JWT_SECRET setzen und Schritt 2 erneut.')"
+echo "  • Chrome/Vivaldi/Brave/Edge: $(T 'unsigned .crx via policy — check' 'unsignierte .crx per Policy — prüfen'): …://extensions"
+echo "  • Firefox: $(T 'unsigned .xpi — use Developer Edition/Nightly,' 'unsignierte .xpi — Developer Edition/Nightly,')"
+echo "    about:config → xpinstall.signatures.required = false → Install from file"
+echo "  $(T 'Full steps:' 'Genau:') companion/INSTALL-BROWSER.md"
 echo
 echo "  $(T 'Then in JDownloader:' 'Dann in JDownloader:')"
 echo "  • $(T 'Add' 'Link hinzufügen'): https://ankergames.net/game/…"
 echo "  • $(T 'Solve Turnstile; keep the AnkerGames tab open.' 'Turnstile lösen; AnkerGames-Tab offen lassen.')"
 echo
-echo "  $(T 'Docs:' 'Doku:') README.md  |  README.de.md"
+echo "  $(T 'Docs:' 'Doku:') README.md  |  README.de.md  |  companion/INSTALL-BROWSER.md"
 echo

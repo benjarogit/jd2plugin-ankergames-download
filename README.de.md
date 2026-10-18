@@ -24,16 +24,12 @@ Inoffizielles **JDownloader-2**-Hoster/Crawler-Plugin plus **echte Browser-Erwei
 
 ### Unterstützte Browser
 
-| Browser | Paket | Auto-Update über GitHub |
-|---------|-------|-------------------------|
-| **Chrome / Chromium** | `.crx` + Policy | Ja — `updates/chromium.xml` |
-| **Vivaldi** | `.crx` + Policy | Ja |
-| **Brave** | `.crx` + Policy | Ja |
-| **Edge** | `.crx` + Policy | Ja |
-| **Firefox** | `.xpi` | Ja **wenn Mozilla-signiert** — `updates/firefox.json`; sonst Badge **↑** |
-| **Safari** | Safari Web Extension (Bau unter macOS) | Kein CRX-Feed — siehe [`companion/safari/README.md`](companion/safari/README.md) |
+| Browser | Paket | Hinweis |
+|---------|-------|---------|
+| **Chrome / Chromium / Vivaldi / Brave / Edge** | unsignierte `.crx` | Sideload / Policy — kein Web Store nötig |
+| **Firefox** | unsignierte `.xpi` | Developer Edition / Nightly (oder temporär laden) — [`companion/INSTALL-BROWSER.md`](companion/INSTALL-BROWSER.md) |
 
-Zusätzlich prüfen alle Companions die **GitHub-Releases-API** und zeigen ein Toolbar-Badge **↑**, wenn eine neuere Version existiert (öffnet die Release-Seite).
+Safari wird **nicht** unterstützt. Toolbar-Badge **↑** bei neuerem GitHub-Release.
 
 ### So funktioniert’s
 
@@ -88,35 +84,25 @@ Du wirst gefragt:
 2. Welcher Browser für Captchas? → einen **Namen** tippen, z. B. `vivaldi`, `chrome`, `brave`, `edge`, `firefox` oder `all`  
    **Keine einzelne Zahl in die Shell tippen** — das ist kein Befehl.
 
-**Chromium-Familie (Vivaldi/Chrome/Brave/Edge):** die Erweiterung wird per **Policy automatisch force-installiert** (kein Drag&Drop). Der Installer startet den Browser neu.
+**Chromium-Familie:** unsignierte `.crx` — Installer per Policy, oder auf `…://extensions` ziehen (Entwicklermodus). Keine Store-Signatur nötig.
 
-**Firefox Release:** Mozilla verlangt eine **Signatur**. Einmalig kostenlose AMO-API-Keys setzen (`AMO_JWT_ISSUER` / `AMO_JWT_SECRET`) und Firefox-Schritt erneut — siehe [`companion/SIGNING.md`](companion/SIGNING.md). Bis dahin: Developer Edition oder XPI manuell.
+**Firefox:** unsignierte `.xpi` — **Developer Edition / Nightly**, `xpinstall.signatures.required` = `false`, dann *Add-on aus Datei installieren…*.  
+Schritt für Schritt (DE/EN): [`companion/INSTALL-BROWSER.md`](companion/INSTALL-BROWSER.md).  
+AMO-Signatur ist optional und für den Normalbetrieb nicht nötig ([`SIGNING.md`](companion/SIGNING.md)).
 
 Eigener JD-Pfad: `JD_HOME="/pfad/zu/jdownloader" ./install.sh`
 
-Windows (nur Plugin): `plugin/install.bat` oder `plugin/install.ps1`, Companion aus [Releases](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest).
+Windows (nur Plugin): `plugin/install.bat` / `plugin/install.ps1`, Companion aus [Releases](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest) + INSTALL-BROWSER.md.
 
-**Companion manuell aus Releases**
+Stabile Chromium-ID: `haopihkkdnnohoknooliddghpanmmedj`
 
-| Browser | Datei | Aktion |
-|---------|-------|--------|
-| Chromium-Familie | `*-chromium-*.crx` | Entwicklermodus → auf `…://extensions` ziehen → neu starten |
-| Firefox | `*-firefox-*.xpi` | `about:addons` → Zahnrad → *Add-on aus Datei installieren…* |
+### Updates
 
-Stabile Chromium-ID: `haopihkkdnnohoknooliddghpanmmedj`  
-Firefox-Signatur: [`companion/SIGNING.md`](companion/SIGNING.md) · Safari: [`companion/safari/README.md`](companion/safari/README.md)
-
-### Updates — automatisch oder nicht?
-
-| Kanal | Automatisch? | Mechanismus |
-|-------|--------------|-------------|
-| Chrome / Vivaldi / Brave / Edge | **Ja** | Native `update_url` → [`updates/chromium.xml`](updates/chromium.xml) → GitHub-Release-`.crx` |
-| Firefox (signiert) | **Ja** | `gecko.update_url` → [`updates/firefox.json`](updates/firefox.json) → Release-`.xpi` |
-| Firefox (unsigniert / Dev Edition) | Nur Badge | Toolbar **↑** → Release öffnen → XPI neu installieren |
-| Safari | Manuell / App Store | Kein GitHub-CRX-Feed |
-| Alle Browser | Badge-Fallback | Alle paar Stunden GitHub-Releases-API |
-
-Bei jedem neuen Release aktualisiert eine GitHub Action die Update-Feeds auf `main`.
+| Kanal | Wie |
+|-------|-----|
+| Chrome / Vivaldi / Brave / Edge | Policy / `updates/chromium.xml` + Installer erneut |
+| Firefox (unsigniert) | Badge **↑** → neue XPI → erneut aus Datei installieren |
+| Alle | Badge prüft GitHub Releases |
 
 ### Bedienung
 
@@ -137,7 +123,7 @@ Bei jedem neuen Release aktualisiert eine GitHub Action die Update-Feeds auf `ma
 | Symptom | Lösung |
 |---------|--------|
 | Captcha schließt, kein Download | Companion fehlt / falscher Browser → 1.4.0+ neu installieren |
-| Firefox „konnte nicht verifiziert werden“ | XPI signieren oder Developer Edition — `SIGNING.md` |
+| Firefox „konnte nicht verifiziert werden“ | Dev Edition/Nightly + `xpinstall.signatures.required=false` — `INSTALL-BROWSER.md` |
 | Browser speichert die ZIP selbst | Alten Companion aktualisieren; CDN-URL nie öffnen |
 | JD bleibt bei 0 B | AnkerGames-Tab offen lassen; Download neu starten |
 | Kein Auto-Update | Feed-URLs / Release-Assets prüfen; Badge **↑** nutzen |
@@ -149,11 +135,11 @@ plugin/          JD-Klassen + Installer
 companion/
   chromium/      MV3-Quellcode → .crx
   firefox/       MV2-Quellcode → .xpi
-  safari/        Hinweise zur Konvertierung (macOS)
   dist/          gebaute Pakete
-  install.sh     Ein-Klick-Installer
+  INSTALL-BROWSER.md   unsignierte Installation (DE/EN)
+  install.sh     Companion-Installer
 core-patch/      Turnstile-HTML + Klasse für Core.jar
-updates/         GitHub-Auto-Update-Feeds
+updates/         GitHub-Update-Feeds
 src/             lesbare Quellen
 ```
 
