@@ -16,6 +16,7 @@
     "downloads",
     "webRequest",
     "webRequestBlocking",
+    "webNavigation",
     "storage",
     "alarms",
     "<all_urls>"

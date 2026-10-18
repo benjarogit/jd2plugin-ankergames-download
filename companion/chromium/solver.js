@@ -287,24 +287,48 @@
 
   function blockPageCdnNavigation() {
     /* AnkerGames navigates to dlproxy after Turnstile — that would leave this tab and abort the CDN pipe. */
+    function isDlproxy(url) {
+      return !!(url && /dlproxy\.uk/i.test(String(url)));
+    }
     document.addEventListener(
       "click",
       function (e) {
         var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
-        if (a && /dlproxy\.uk/i.test(a.href || "")) {
+        if (a && isDlproxy(a.href || "")) {
           e.preventDefault();
           e.stopPropagation();
+          e.stopImmediatePropagation();
+        }
+      },
+      true
+    );
+    document.addEventListener(
+      "submit",
+      function (e) {
+        try {
+          var action = e.target && e.target.action;
+          if (isDlproxy(action)) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        } catch (e2) {
+          /* ignore */
         }
       },
       true
     );
     try {
       var pw = pageWin();
-      pw.open = function () {
-        return null;
+      var realOpen = pw.open.bind(pw);
+      pw.open = function (url) {
+        if (isDlproxy(url)) {
+          console.log("[JD Turnstile] blocked window.open → CDN");
+          return null;
+        }
+        return realOpen.apply(pw, arguments);
       };
       function blockAssign(url) {
-        if (url && /dlproxy\.uk/i.test(String(url))) {
+        if (isDlproxy(url)) {
           console.log("[JD Turnstile] blocked location → CDN (keep tab for pipe)");
           return true;
         }
@@ -312,11 +336,13 @@
       }
       var loc = pw.location;
       try {
-        var desc = Object.getOwnPropertyDescriptor(pw.Location.prototype, "href") ||
+        var desc =
+          Object.getOwnPropertyDescriptor(pw.Location.prototype, "href") ||
           Object.getOwnPropertyDescriptor(loc, "href");
         if (desc && desc.set) {
           Object.defineProperty(loc, "href", {
             configurable: true,
+            enumerable: true,
             get: function () {
               return desc.get.call(loc);
             },
@@ -328,6 +354,20 @@
         }
       } catch (e1) {
         /* ignore */
+      }
+      try {
+        Object.defineProperty(pw, "location", {
+          configurable: true,
+          get: function () {
+            return loc;
+          },
+          set: function (v) {
+            if (blockAssign(v)) return;
+            loc.href = v;
+          }
+        });
+      } catch (eLoc) {
+        /* ignore — page may forbid redefining location */
       }
       var assign = loc.assign.bind(loc);
       var replace = loc.replace.bind(loc);

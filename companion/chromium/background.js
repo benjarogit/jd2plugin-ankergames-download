@@ -23,9 +23,15 @@ let activeCaptchaJob = null;
 /** Prevent double do=solve / second download when tab closes or hook fires twice. */
 const solvedGate = Object.create(null);
 let pipeSession = null;
+/** Avoid infinite fallback if background pipe also fails. */
+let pipeBgFallbackUsed = false;
+/** Last known AnkerGames URL per tab — restore if page navigates to dlproxy. */
+const lastAnkerUrlByTab = Object.create(null);
 
 const LOCAL_TURN_RE =
   /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\]):\d+\/captcha\/turn\//i;
+const DLPROXY_RE = /dlproxy\.uk/i;
+const ANKER_RE = /ankergames\.net/i;
 
 function isLocalTurnUrl(url) {
   return !!(url && LOCAL_TURN_RE.test(url));
@@ -545,11 +551,13 @@ function beginRelayTransfer(opts) {
   }
 
   markSolved(key);
+  pipeBgFallbackUsed = false;
   pipeSession = {
     key: key,
     workTabId: tabId,
     captchaTabId: job && job.captchaTabId,
-    relayBase: relayBase
+    relayBase: relayBase,
+    cdnUrl: cdnUrl
   };
   if (job) {
     job.solved = true;
@@ -645,7 +653,7 @@ function installDownloadGuard() {
   }
   try {
     api.downloads.onCreated.addListener(function (item) {
-      if (!item || !item.url || !/dlproxy\.uk/i.test(item.url)) {
+      if (!item || !item.url || !DLPROXY_RE.test(item.url)) {
         return;
       }
       console.warn("[JD Turnstile] cancelling browser download", item.id, item.url.slice(0, 60));
@@ -653,7 +661,11 @@ function installDownloadGuard() {
       api.downloads.cancel(id).catch(function () {});
       setTimeout(function () {
         api.downloads.erase({ id: id }).catch(function () {});
-      }, 500);
+      }, 250);
+      setTimeout(function () {
+        api.downloads.cancel(id).catch(function () {});
+        api.downloads.erase({ id: id }).catch(function () {});
+      }, 1000);
     });
   } catch (e) {
     console.warn("[JD Turnstile] downloads guard unavailable", e);
@@ -661,7 +673,43 @@ function installDownloadGuard() {
 }
 installDownloadGuard();
 
+/**
+ * MV3 often cannot cancel navigation with webRequestBlocking. If the page still
+ * navigates to dlproxy during an active pipe, bounce back to the last AnkerGames URL.
+ */
+function installDlproxyNavGuard() {
+  if (!api.webNavigation || !api.webNavigation.onBeforeNavigate) {
+    return;
+  }
+  try {
+    api.webNavigation.onBeforeNavigate.addListener(function (details) {
+      if (!details || details.frameId !== 0) {
+        return;
+      }
+      if (!DLPROXY_RE.test(details.url || "")) {
+        return;
+      }
+      if (!pipeSession || pipeSession.workTabId !== details.tabId) {
+        return;
+      }
+      const back = lastAnkerUrlByTab[details.tabId];
+      if (!back) {
+        console.warn("[JD Turnstile] dlproxy nav during pipe — no AnkerGames URL to restore");
+        return;
+      }
+      console.warn("[JD Turnstile] bounce dlproxy → AnkerGames", details.tabId);
+      api.tabs.update(details.tabId, { url: back }).catch(function () {});
+    });
+  } catch (e) {
+    console.warn("[JD Turnstile] webNavigation guard unavailable", e);
+  }
+}
+installDlproxyNavGuard();
+
 api.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  if (tab && tab.url && ANKER_RE.test(tab.url)) {
+    lastAnkerUrlByTab[tabId] = tab.url;
+  }
   if (changeInfo.status === "complete" && isLocalTurnUrl(tab.url)) {
     handleLocalCaptchaTab(tabId, tab.url, false);
     return;
@@ -677,14 +725,102 @@ api.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   injectSolver(tabId, job).catch(console.error);
 });
 
+function handleRelayStart(msg) {
+  const push = relayPushUrl(msg.relayBase || (pipeSession && pipeSession.relayBase) || "");
+  return signalRelayStart(push, msg.headers || {})
+    .then(function () {
+      return { ok: true };
+    })
+    .catch(function (err) {
+      return { ok: false, error: String(err && err.message ? err.message : err) };
+    });
+}
+
+function handleRelayChunk(msg) {
+  const push = relayPushUrl(msg.relayBase || (pipeSession && pipeSession.relayBase) || "");
+  var bytes;
+  if (msg.chunk instanceof ArrayBuffer) {
+    bytes = new Uint8Array(msg.chunk);
+  } else if (msg.chunk && msg.chunk.buffer) {
+    bytes = new Uint8Array(msg.chunk.buffer, msg.chunk.byteOffset || 0, msg.chunk.byteLength);
+  } else {
+    return Promise.resolve({ ok: false, error: "missing chunk" });
+  }
+  return pushRelayChunk(push, bytes)
+    .then(function () {
+      return { ok: true };
+    })
+    .catch(function (err) {
+      return { ok: false, error: String(err && err.message ? err.message : err) };
+    });
+}
+
+function handleRelayEnd(msg) {
+  const push = relayPushUrl(msg.relayBase || (pipeSession && pipeSession.relayBase) || "");
+  return signalRelayEnd(push).then(function () {
+    return { ok: true };
+  });
+}
+
+function fallbackPipeFromBackground(cdnUrl, relayBase, tabId) {
+  if (pipeBgFallbackUsed) {
+    console.error("[JD Turnstile] background fallback already used — giving up");
+    return Promise.resolve();
+  }
+  pipeBgFallbackUsed = true;
+  console.warn("[JD Turnstile] tab pipe failed — background fallback");
+  if (tabId != null) {
+    sendTabMessage(tabId, {
+      type: "jdt-status",
+      text: "Retrying stream via background — keep this tab open…"
+    }).catch(function () {});
+  }
+  return pipeCdnViaBackground(cdnUrl, relayBase)
+    .then(function () {
+      if (tabId != null) {
+        sendTabMessage(tabId, {
+          type: "jdt-status",
+          text: "Stream finished — you can close this tab."
+        }).catch(function () {});
+      }
+      closePipeSessionTabs();
+    })
+    .catch(function (err) {
+      console.error("[JD Turnstile] background fallback failed", err);
+      if (tabId != null) {
+        sendTabMessage(tabId, {
+          type: "jdt-status",
+          text: "Pipe failed: " + (err && err.message ? err.message : err)
+        }).catch(function () {});
+      }
+    });
+}
+
 api.runtime.onMessage.addListener(function (msg, sender) {
   if (!msg || !msg.type) {
     return;
+  }
+  if (msg.type === "jdt-relay-start") {
+    return handleRelayStart(msg);
+  }
+  if (msg.type === "jdt-relay-chunk") {
+    return handleRelayChunk(msg);
+  }
+  if (msg.type === "jdt-relay-end") {
+    return handleRelayEnd(msg);
   }
   if (msg.type === "jdt-pipe-done") {
     console.log("[JD Turnstile] pipe done", msg.ok, msg.error || "");
     if (msg.ok) {
       closePipeSessionTabs();
+      return;
+    }
+    const cdnUrl = msg.cdnUrl || (pipeSession && pipeSession.cdnUrl) || "";
+    const relayBase = msg.relayBase || (pipeSession && pipeSession.relayBase) || "";
+    const tabId =
+      (sender.tab && sender.tab.id) || (pipeSession && pipeSession.workTabId) || null;
+    if (cdnUrl && relayBase) {
+      fallbackPipeFromBackground(cdnUrl, relayBase, tabId);
     }
     return;
   }
@@ -843,6 +979,7 @@ api.tabs.onRemoved.addListener(function (tabId) {
   const job = jobsByTab[tabId];
   delete jobsByTab[tabId];
   delete localHandled[tabId];
+  delete lastAnkerUrlByTab[tabId];
   /* Closing the work tab mid-stream aborts tab-pipe; do NOT start a new captcha job. */
   if (pipeSession && pipeSession.workTabId === tabId) {
     console.warn("[JD Turnstile] work tab closed during pipe — keep JD running; do not open a new captcha");

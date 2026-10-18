@@ -8,3 +8,6 @@ Thumbs.db
 # Do not reuse this key for unrelated extensions.
 __pycache__/
 *.pyc
+.amo-upload-uuid
+web-ext-artifacts/
+companion/dist/signed/

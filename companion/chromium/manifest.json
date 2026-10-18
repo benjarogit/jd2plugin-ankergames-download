@@ -19,6 +19,7 @@
     "scripting",
     "webRequest",
     "webRequestBlocking",
+    "webNavigation",
     "alarms",
     "storage"
   ],

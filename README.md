@@ -119,8 +119,8 @@ Use the **same browser** JD opens for captchas.
 
 | Browser | How |
 |---------|-----|
-| Chrome / Vivaldi / Brave / Edge | Extensions page → Developer mode ON → Load unpacked → `companion/chromium/` |
-| Firefox | Dev Edition or Nightly only → `xpinstall.signatures.required` = false → install `companion/dist/jd-turnstile-companion-firefox-*.xpi` |
+| Chrome / Vivaldi / Brave / Edge | Open `chrome://extensions` (or `vivaldi://extensions`) → Developer mode ON → **Load unpacked** → select the folder `companion/chromium/` (not the ZIP root) |
+| Firefox (normal) | `about:addons` → gear → **Install Add-on From File…** → signed `companion/dist/jd-turnstile-companion-firefox-1.0.0.xpi`. Until Mozilla finishes signing: `about:debugging` → This Firefox → Load Temporary Add-on → `companion/firefox/manifest.json` |
 
 </details>
 
@@ -148,9 +148,9 @@ Turnstile → companion fetches CDN → localhost → JD saves file
 |---------|-----|
 | Pathfinder empty | See “Nothing found” above |
 | Plugin missing in JD | Files under `…/jd/plugins/…` + Core patch |
-| Companion missing | Developer mode ON · reload unpacked |
-| Firefox “not verified” | Dev Edition / Nightly + signatures = false |
+| Companion missing | Load the `companion/chromium/` folder (unpacked) or the signed Firefox XPI |
+| Firefox rejects XPI | Need Mozilla-signed build · or temporary load via `about:debugging` |
 | JD at 0 B | Keep AnkerGames tab open |
-| Browser saves the ZIP | Don’t open `*.dlproxy.uk` · reload companion |
+| Browser saves the ZIP | Reload companion · don’t open `*.dlproxy.uk` |
 
 </details>

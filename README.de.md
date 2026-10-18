@@ -119,8 +119,8 @@ Denselben Browser nutzen, den JD für Captchas öffnet.
 
 | Browser | So |
 |---------|----|
-| Chrome / Vivaldi / Brave / Edge | Erweiterungsseite → Entwicklermodus an → Entpackt laden → `companion/chromium/` |
-| Firefox | Nur Dev Edition oder Nightly → `xpinstall.signatures.required` = false → `companion/dist/jd-turnstile-companion-firefox-*.xpi` |
+| Chrome / Vivaldi / Brave / Edge | `chrome://extensions` (bzw. `vivaldi://extensions`) → Entwicklermodus an → **Entpackte Erweiterung laden** → Ordner `companion/chromium/` wählen (nicht die ZIP-Wurzel) |
+| Firefox (normal) | `about:addons` → Zahnrad → **Add-on aus Datei installieren…** → signierte `companion/dist/jd-turnstile-companion-firefox-1.0.0.xpi`. Bis Mozilla fertig signiert: `about:debugging` → Dieser Firefox → Temporäres Add-on → `companion/firefox/manifest.json` |
 
 </details>
 
@@ -148,9 +148,9 @@ Turnstile → Companion holt CDN → localhost → JD speichert
 |---------|--------|
 | Pathfinder leer | Siehe „Nichts gefunden“ oben |
 | Plugin fehlt in JD | Dateien unter `…/jd/plugins/…` + Core-Patch |
-| Companion fehlt | Entwicklermodus an · neu laden |
-| Firefox „nicht verifiziert“ | Dev Edition / Nightly + Signaturen = false |
+| Companion fehlt | Ordner `companion/chromium/` (entpackt) oder die signierte Firefox-XPI laden |
+| Firefox lehnt XPI ab | Braucht Mozilla-Signatur · oder temporär über `about:debugging` laden |
 | JD bei 0 B | AnkerGames-Tab offen lassen |
-| Browser speichert die ZIP | `*.dlproxy.uk` nicht öffnen · Companion neu laden |
+| Browser speichert die ZIP | Companion neu laden · `*.dlproxy.uk` nicht öffnen |
 
 </details>
