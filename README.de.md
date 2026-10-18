@@ -57,37 +57,42 @@ Dieses Projekt liefert:
 ### Schritt 1 — JDownloader-Plugin
 
 <details>
-<summary><strong>Wo liegt mein JDownloader-Ordner?</strong></summary>
+<summary><strong>Wo liegt JDownloader? (wichtig: zwei Ebenen)</strong></summary>
 
-| OS | Typischer Pfad |
-|----|----------------|
-| **Windows** | `%USERPROFILE%\.jd` oder dein JD-Installationsordner |
-| **Linux** | `~/.jd` |
-| **macOS** | `~/Library/Application Support/JDownloader` |
+**JD-Root** = Ordner mit `JDownloader.jar` und `Core.jar`  
+**Plugin-Ordner** = darunter `jd/plugins/` (noch ein Unterordner namens `jd`)
 
-Dort liegen `JDownloader.jar`, `Core.jar` und `jd/plugins/`.
+| OS | JD-Root (Beispiel) | Plugins gehören hierhin |
+|----|--------------------|-------------------------|
+| **Linux** | `/home/DEINNAME/.jd/` | `/home/DEINNAME/.jd/jd/plugins/` |
+| **Windows** | `C:\Users\DEINNAME\.jd\` | `C:\Users\DEINNAME\.jd\jd\plugins\` |
+| **macOS** | `~/Library/Application Support/JDownloader/` | `…/JDownloader/jd/plugins/` |
+
+Beispiel auf diesem Rechner: JD-Root `/home/benny/.jd/` → Plugins `/home/benny/.jd/jd/plugins/`.
 
 </details>
 
 1. **JDownloader komplett beenden.**
-2. Diese Ordner nach JD `jd/plugins/` kopieren:
+2. Dateien aus dem ZIP **in den Plugin-Ordner** kopieren  
+   (Linux-Beispiel: `/home/DEINNAME/.jd/jd/plugins/`):
 
-| Aus dem ZIP | Nach JD |
-|-------------|---------|
-| `plugin/plugins/hoster/` | `jd/plugins/hoster/` |
-| `plugin/plugins/decrypter/` | `jd/plugins/decrypter/` |
-| `plugin/plugins/components/` | `jd/plugins/components/` |
+| Aus dem ZIP | Ziel (vollständiger Pfad) |
+|-------------|---------------------------|
+| Inhalt von `plugin/plugins/hoster/` | `…/.jd/jd/plugins/hoster/` |
+| Inhalt von `plugin/plugins/decrypter/` | `…/.jd/jd/plugins/decrypter/` |
+| Inhalt von `plugin/plugins/components/` | `…/.jd/jd/plugins/components/` |
 
-3. **`Core.jar`** patchen (ist eine ZIP — mit 7-Zip öffnen):
+Die `.class`-Dateien müssen z. B. so liegen:  
+`/home/DEINNAME/.jd/jd/plugins/hoster/AnkergamesNet.class`
+
+3. **`Core.jar`** im **JD-Root** patchen (liegt neben `JDownloader.jar`, z. B. `/home/DEINNAME/.jd/Core.jar` — ist eine ZIP, mit 7-Zip öffnen):
    - Zuerst Backup von `Core.jar`
    - Im Archiv ersetzen:
 
 | Pfad in `Core.jar` | Ersetzen durch |
 |--------------------|----------------|
-| `…/cloudflareturnstile/turnstile.html` | `core-patch/turnstile.html` |
-| `…/cloudflareturnstile/CloudflareTurnstileChallenge.class` | `core-patch/CloudflareTurnstileChallenge.class` |
-
-   Pfad-Präfix: `org/jdownloader/captcha/v2/challenge/cloudflareturnstile/`
+| `org/jdownloader/captcha/v2/challenge/cloudflareturnstile/turnstile.html` | `core-patch/turnstile.html` |
+| `org/jdownloader/captcha/v2/challenge/cloudflareturnstile/CloudflareTurnstileChallenge.class` | `core-patch/CloudflareTurnstileChallenge.class` |
 
 4. JDownloader starten.
 
@@ -157,7 +162,7 @@ Turnstile (du)  →  Erweiterung holt CDN (echtes TLS)
 | Firefox „nicht verifiziert“ | Dev Edition/Nightly + Signaturen = false |
 | JD bei 0 B | AnkerGames-Tab offen lassen |
 | Browser speichert die ZIP | `*.dlproxy.uk` nicht öffnen · Erweiterung neu laden |
-| Plugin fehlt in JD | Klassen unter `jd/plugins/` + Core-Patch |
+| Plugin fehlt in JD | Liegen die `.class` unter `…/.jd/jd/plugins/…` (mit `jd/` dazwischen)? + Core-Patch in `…/.jd/Core.jar` |
 
 ---
 
