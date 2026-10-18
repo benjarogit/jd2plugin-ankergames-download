@@ -56,36 +56,50 @@ Dieses Projekt liefert:
 
 ### Schritt 1 — JDownloader-Plugin
 
-<details>
-<summary><strong>Wo liegt JDownloader? (wichtig: zwei Ebenen)</strong></summary>
+#### Zuerst: JD-Ordner finden (bei jedem anders)
 
-**JD-Root** = Ordner mit `JDownloader.jar` und `Core.jar`  
-**Plugin-Ordner** = darunter `jd/plugins/` (noch ein Unterordner namens `jd`)
+Es gibt **zwei Ebenen** — die verwechseln viele:
 
-| OS | JD-Root (Beispiel) | Plugins gehören hierhin |
-|----|--------------------|-------------------------|
-| **Linux** | `/home/DEINNAME/.jd/` | `/home/DEINNAME/.jd/jd/plugins/` |
-| **Windows** | `C:\Users\DEINNAME\.jd\` | `C:\Users\DEINNAME\.jd\jd\plugins\` |
-| **macOS** | `~/Library/Application Support/JDownloader/` | `…/JDownloader/jd/plugins/` |
+| Name | Was liegt drin? | Beispiel |
+|------|-----------------|----------|
+| **JD-Root** | `JDownloader.jar` + `Core.jar` | `…/.jd/` oder dein Portable-Ordner |
+| **Plugin-Ordner** | Unterordner `jd/plugins/` | `…/.jd/jd/plugins/` |
 
-Beispiel auf diesem Rechner: JD-Root `/home/benny/.jd/` → Plugins `/home/benny/.jd/jd/plugins/`.
+**So findest du den richtigen Ordner (egal ob Installer oder Portable):**
 
-</details>
+1. Suche auf dem PC nach der Datei **`JDownloader.jar`**  
+   (Windows: Win+S · Linux/macOS: Dateimanager-Suche oder Helfer unten)
+2. **Rechtsklick → Ordner öffnen / Open file location**  
+   → Das ist dein **JD-Root**
+3. Darin den Unterordner **`jd` → `plugins`** öffnen  
+   → Das ist dein **Plugin-Ordner**
+4. Portable: oft der Ordner, in den du JD entpackt hast (Desktop, Downloads, USB…)
+
+**Automatisch suchen lassen:**
+
+| System | Helfer im ZIP |
+|--------|----------------|
+| Windows | `plugin/find-jd-home.bat` doppelklicken |
+| Linux / macOS | `cd plugin && chmod +x find-jd-home.sh && ./find-jd-home.sh` |
+
+Der Helfer zeigt dir JD-Root **und** den Plugin-Pfad. Bei mehreren Installationen: die nehmen, die du wirklich startest (Verknüpfung prüfen).
+
+---
 
 1. **JDownloader komplett beenden.**
-2. Dateien aus dem ZIP **in den Plugin-Ordner** kopieren  
-   (Linux-Beispiel: `/home/DEINNAME/.jd/jd/plugins/`):
+2. Aus dem ZIP in **deinen** Plugin-Ordner kopieren  
+   (`<JD-Root>/jd/plugins/…` — Pfad kommt vom Helfer / der Suche):
 
-| Aus dem ZIP | Ziel (vollständiger Pfad) |
-|-------------|---------------------------|
-| Inhalt von `plugin/plugins/hoster/` | `…/.jd/jd/plugins/hoster/` |
-| Inhalt von `plugin/plugins/decrypter/` | `…/.jd/jd/plugins/decrypter/` |
-| Inhalt von `plugin/plugins/components/` | `…/.jd/jd/plugins/components/` |
+| Aus dem ZIP | Ziel |
+|-------------|------|
+| Inhalt von `plugin/plugins/hoster/` | `<JD-Root>/jd/plugins/hoster/` |
+| Inhalt von `plugin/plugins/decrypter/` | `<JD-Root>/jd/plugins/decrypter/` |
+| Inhalt von `plugin/plugins/components/` | `<JD-Root>/jd/plugins/components/` |
 
-Die `.class`-Dateien müssen z. B. so liegen:  
-`/home/DEINNAME/.jd/jd/plugins/hoster/AnkergamesNet.class`
+Fertig ist es, wenn z. B. existiert:  
+`<JD-Root>/jd/plugins/hoster/AnkergamesNet.class`
 
-3. **`Core.jar`** im **JD-Root** patchen (liegt neben `JDownloader.jar`, z. B. `/home/DEINNAME/.jd/Core.jar` — ist eine ZIP, mit 7-Zip öffnen):
+3. **`Core.jar`** im **JD-Root** patchen (neben `JDownloader.jar` — ist eine ZIP, mit 7-Zip öffnen):
    - Zuerst Backup von `Core.jar`
    - Im Archiv ersetzen:
 
@@ -97,12 +111,12 @@ Die `.class`-Dateien müssen z. B. so liegen:
 4. JDownloader starten.
 
 <details>
-<summary>Optional: Kopier-Skript</summary>
+<summary>Optional: Kopier-Skript (nach dem Finden)</summary>
 
 ```bash
 cd plugin
-./install.sh      # Linux / macOS
-install.bat       # Windows
+JD_HOME="/pfad/zum/JD-Root" ./install.sh   # Linux / macOS
+# Windows: install.bat  (sucht selbst; sonst JD_HOME setzen)
 ```
 
 </details>

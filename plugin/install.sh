@@ -51,7 +51,10 @@ detect_jd_home() {
       return
     fi
   done
-  die "JDownloader folder not found. Set JD_HOME to your JD directory (contains JDownloader.jar + Core.jar)."
+  echo "JDownloader folder not found." >&2
+  echo "Run:  ./find-jd-home.sh   (searches this PC for JDownloader.jar)" >&2
+  echo "Then: JD_HOME=\"/path/from/helper\" ./install.sh" >&2
+  exit 1
 }
 
 wait_until_stopped() {
