@@ -6,3 +6,5 @@ Thumbs.db
 
 # Keep chromium.pem in repo for stable CRX id (self-distributed companion).
 # Do not reuse this key for unrelated extensions.
+__pycache__/
+*.pyc
