@@ -24,7 +24,7 @@ echo "Building Firefox XPI v${VER} ..."
   zip -r -FS "${DIST}/jd-turnstile-companion-firefox-${VER}.xpi" \
     manifest.json background.js update-check.js solver.js local-hook.js ankergames-hook.js cdn-pipe.js \
     icons icon48.png \
-    -x "*.md" -x "install.sh" -x ".git*"
+    -x "*.md" -x ".git*"
 )
 
 echo "Building Chromium ZIP v${VER} ..."
