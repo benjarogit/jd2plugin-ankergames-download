@@ -26,9 +26,13 @@ import org.appwork.utils.StringUtils;
 import org.appwork.utils.encoding.Base64;
 import org.appwork.utils.formatter.SizeFormatter;
 import org.appwork.utils.os.CrossSystem;
+import org.appwork.utils.swing.EDTRunner;
+import org.appwork.utils.swing.windowmanager.WindowManager.FrameState;
 import org.jdownloader.captcha.v2.challenge.cloudflareturnstile.AbstractCloudflareTurnstileCaptcha;
 import org.jdownloader.captcha.v2.challenge.cloudflareturnstile.CloudflareTurnstileChallenge;
 import org.jdownloader.plugins.controller.LazyPlugin;
+
+import jd.gui.swing.jdgui.JDGui;
 
 import jd.PluginWrapper;
 import jd.http.Browser;
@@ -337,6 +341,8 @@ public class AnkergamesNet extends PluginForHost {
                      * JA4, not Java). JD only downloads from localhost — never hits dlproxy.
                      */
                     dllink = relay.getFileUrl();
+                    /* Browser tab closes after pipe start — bring JD forward so progress is visible. */
+                    bringJdToFront();
                 } else if (cdn != null && StringUtils.isNotEmpty(cdn.url) && StringUtils.startsWithCaseInsensitive(cdn.via, "browser")) {
                     link.removeProperty(PROPERTY_DIRECTURL);
                     throw new PluginException(LinkStatus.ERROR_FATAL, "CDN download started in browser (update Companion to 1.2+ for JD-managed relay).");
@@ -747,6 +753,30 @@ public class AnkergamesNet extends PluginForHost {
     public boolean hasCaptcha(final DownloadLink link, final Account acc) {
         /* Cloudflare Turnstile via browser companion */
         return true;
+    }
+
+    /**
+     * After the browser companion closes the AnkerGames tab, raise the JD main window so the
+     * user sees the download progress (confirmation that the relay pipe worked).
+     */
+    private void bringJdToFront() {
+        try {
+            new EDTRunner() {
+                @Override
+                protected void runInEDT() {
+                    try {
+                        final JDGui gui = JDGui.getInstance();
+                        if (gui != null) {
+                            gui.setFrameState(FrameState.TO_FRONT_FOCUSED);
+                        }
+                    } catch (final Throwable e) {
+                        getLogger().log(e);
+                    }
+                }
+            };
+        } catch (final Throwable e) {
+            getLogger().log(e);
+        }
     }
 
     @Override
