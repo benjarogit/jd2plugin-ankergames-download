@@ -67,13 +67,17 @@ Write-Host ""
 if ($found.Count -eq 0) {
     Write-Host "No JDownloader folder found." -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "Do this instead:"
-    Write-Host "  1) Windows search (Win+S) -> type:  JDownloader.jar"
-    Write-Host "  2) Right-click the result -> Open file location"
-    Write-Host "  3) That folder is your JD root (contains Core.jar + jd\ folder)"
-    Write-Host "  4) Portable: the folder you extracted JD into"
+    Write-Host "What to try next:"
+    Write-Host "  1) Start JDownloader once (so it creates its folder)"
+    Write-Host "  2) Right-click the shortcut -> Open file location"
+    Write-Host "  3) Win+S search for:  JDownloader.jar"
+    Write-Host "     -> that folder is your JD root (Core.jar + jd\ next to it)"
+    Write-Host "  4) Portable: look where you extracted JD"
+    Write-Host "     (Desktop, Downloads, USB, another drive)"
+    Write-Host "  5) Or search for  Core.jar  (must sit next to JDownloader.jar)"
     Write-Host ""
     Write-Host "Copy plugins into:  <JD-Root>\jd\plugins\"
+    Write-Host "More detail: README.md / README.de.md -> If nothing is found"
     pause
     exit 1
 }

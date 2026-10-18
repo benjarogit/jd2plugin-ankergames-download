@@ -66,31 +66,41 @@ if [[ "${#found[@]}" -eq 0 ]]; then
     cat <<EOF
 Kein JDownloader-Ordner gefunden.
 
-So findest du ihn selbst:
-  1) Dateimanager / Windows-Suche: nach  JDownloader.jar  suchen
-  2) Der Ordner, in dem diese Datei liegt, ist dein JD-Root
-     (dort liegen auch Core.jar und der Unterordner jd/)
-  3) Portable Version: der Ordner, in den du JD entpackt hast
+Was du jetzt tun kannst:
+  1) JDownloader einmal starten (damit der Ordner entsteht)
+  2) Rechtsklick auf die Verknüpfung → „Dateipfad öffnen“
+  3) Am PC nach  JDownloader.jar  suchen (Dateimanager / Suche)
+     → der Ordner mit dieser Datei ist dein JD-Root
+  4) Portable: schau, wohin du JD entpackt hast
+     (Desktop, Downloads, USB, anderes Laufwerk)
+  5) Alternativ nach  Core.jar  suchen — muss neben JDownloader.jar liegen
 
 Dann Plugins hierhin kopieren:
   <JD-Root>/jd/plugins/hoster/
   <JD-Root>/jd/plugins/decrypter/
   <JD-Root>/jd/plugins/components/
+
+Mehr dazu: README.de.md → „Wenn nichts gefunden wird“
 EOF
   else
     cat <<EOF
 No JDownloader folder found.
 
-Find it yourself:
-  1) File manager / Windows search: look for  JDownloader.jar
-  2) The folder that contains that file is your JD root
-     (Core.jar and a jd/ subfolder should be next to it)
-  3) Portable: the folder you extracted JD into
+What to try next:
+  1) Start JDownloader once (so it creates its folder)
+  2) Right-click the shortcut → “Open file location”
+  3) Search the PC for  JDownloader.jar
+     → the folder containing that file is your JD root
+  4) Portable: look where you extracted JD
+     (Desktop, Downloads, USB, another drive)
+  5) Or search for  Core.jar  — it must sit next to JDownloader.jar
 
 Then copy plugins into:
   <JD-Root>/jd/plugins/hoster/
   <JD-Root>/jd/plugins/decrypter/
   <JD-Root>/jd/plugins/components/
+
+More detail: README.md → “If nothing is found”
 EOF
   fi
   exit 1

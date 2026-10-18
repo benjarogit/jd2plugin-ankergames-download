@@ -10,7 +10,13 @@ No AnkerGames login required.
    JD root   = folder with JDownloader.jar + Core.jar
    Plugins   = <JD-root>/jd/plugins/
 
-2) Full steps: ../README.md  or  ../README.de.md
+   If the helper finds nothing:
+     - Start JD once, or open the shortcut's file location
+     - Search for JDownloader.jar / Core.jar
+     - Portable: check where you extracted JD
+     Details: ../README.md  or  ../README.de.md  ("If nothing is found")
+
+2) Full install steps: ../README.md  or  ../README.de.md
 
 Optional copy helper (after you know JD root):
   Linux/macOS:  JD_HOME="/path/to/root" ./install.sh
