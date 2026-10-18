@@ -31,19 +31,16 @@ for bin in firefox firefox-bin firefox-developer-edition firefox-nightly; do
 done
 
 echo
-echo "Installing via Firefox UI:"
-echo "  1) Confirm the add-on install prompt, OR"
-echo "  2) about:addons → gear → Install Add-on From File…"
-echo "     → ${INSTALL_DIR}/jd-turnstile-companion.xpi"
+echo "Finish in Firefox (do not type numbers into the terminal):"
+echo "  • Confirm the add-on install prompt, OR"
+echo "  • about:addons → gear → Install Add-on From File…"
+echo "    → ${INSTALL_DIR}/jd-turnstile-companion.xpi"
 echo
 echo "Signing:"
-echo "  • Release Firefox requires a Mozilla-signed XPI (see companion/SIGNING.md)."
-echo "  • Firefox Developer Edition / Nightly: about:config →"
-echo "    xpinstall.signatures.required = false, then install the XPI."
+echo "  • Release Firefox needs a Mozilla-signed XPI (see companion/SIGNING.md)."
+echo "  • Developer Edition / Nightly: about:config → xpinstall.signatures.required = false"
 echo
-echo "Updates:"
-echo "  • Signed XPIs: Firefox polls ${UPDATE_JSON}"
-echo "  • Unsigned / Dev Edition: toolbar badge ↑ when a newer GitHub Release exists."
+echo "Updates: signed XPIs poll ${UPDATE_JSON} ; else toolbar badge ↑"
 echo
 
 if [[ -n "${FIREFOX}" ]]; then

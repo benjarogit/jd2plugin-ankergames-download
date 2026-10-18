@@ -72,49 +72,38 @@ Cloudflare compares **TLS fingerprints (JA3/JA4)** with the User-Agent. JDownloa
 - One supported desktop browser (same one JD uses for captchas)
 - Linux / macOS / Windows for the plugin installer; companion scripts are bash (WSL/Git Bash on Windows, or install `.crx`/`.xpi` from Releases manually)
 
-### Installation
+### Installation (recommended)
 
-#### 1) JDownloader plugin + Core patch
+One wizard installs the **plugin** and the **browser add-on**. It speaks German or English (from your system language, or force with `--de` / `--en`).
 
 ```bash
 git clone https://github.com/benjarogit/jd2plugin-ankergames-download.git
-cd jd2plugin-ankergames-download/plugin
+cd jd2plugin-ankergames-download
 chmod +x install.sh
 ./install.sh
 ```
 
-Windows: `install.bat` or `install.ps1`.
+You will be asked:
 
-Custom JD path:
+1. Continue with the JDownloader plugin? → type **Y** / **J** (or **n** to skip)
+2. Which browser for captchas? → type a **name**, e.g. `vivaldi`, `chrome`, `brave`, `edge`, `firefox`, or `all`  
+   **Do not type a lone number into the shell** — that is not a command.
 
-```bash
-JD_HOME="/path/to/jdownloader" ./install.sh
-```
+Then confirm the `.crx` / `.xpi` prompt in the browser and **restart the browser once**.
 
-#### 2) Browser companion (real add-on)
+Custom JD path: `JD_HOME="/path/to/jdownloader" ./install.sh`
 
-```bash
-cd ../companion
-chmod +x install.sh
-./install.sh
-```
+Windows (plugin only): `plugin/install.bat` or `plugin/install.ps1`, then install the companion from [Releases](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest).
 
-Choose **[2]** for Chrome/Vivaldi/Brave/Edge, **[1]** for Firefox, or **[3]** for both.
-
-**Or install from [Releases](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest):**
+**Manual companion from Releases**
 
 | Browser | File | Action |
 |---------|------|--------|
-| Chromium family | `jd-turnstile-companion-chromium-*.crx` | `…://extensions` → Developer mode → drag the `.crx` onto the page → restart once |
-| Firefox | `jd-turnstile-companion-firefox-*.xpi` | `about:addons` → gear → *Install Add-on From File…* |
+| Chromium family | `*-chromium-*.crx` | Developer mode → drag onto `…://extensions` → restart |
+| Firefox | `*-firefox-*.xpi` | `about:addons` → gear → *Install Add-on From File…* |
 
-Stable Chromium extension id: `haopihkkdnnohoknooliddghpanmmedj`
-
-**Firefox signing:** Release Firefox rejects unsigned XPIs. Use [Firefox Developer Edition](https://www.mozilla.org/firefox/developer/) (`xpinstall.signatures.required` = `false`) or sign via AMO — see [`companion/SIGNING.md`](companion/SIGNING.md).
-
-**Safari:** build on a Mac with Xcode — [`companion/safari/README.md`](companion/safari/README.md).
-
-Confirm companion version **1.4.0+** on the extensions page.
+Stable Chromium id: `haopihkkdnnohoknooliddghpanmmedj`  
+Firefox signing: [`companion/SIGNING.md`](companion/SIGNING.md) · Safari: [`companion/safari/README.md`](companion/safari/README.md)
 
 ### Updates — automatic or not?
 

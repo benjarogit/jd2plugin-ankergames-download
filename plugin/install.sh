@@ -170,7 +170,17 @@ start_jd() {
 }
 
 main() {
-  echo "=== AnkerGames JDownloader Plugin Installer ==="
+  local lang="en"
+  case "${LANG:-}${LC_ALL:-}" in
+    [Dd][Ee]*|*[Dd]eutsch*) lang=de ;;
+  esac
+
+  if [[ "${lang}" == de ]]; then
+    echo "=== AnkerGames JDownloader — Plugin-Installer ==="
+  else
+    echo "=== AnkerGames JDownloader — Plugin Installer ==="
+  fi
+
   local jd_home
   jd_home="$(detect_jd_home)"
   echo "JD home: ${jd_home}"
@@ -179,10 +189,29 @@ main() {
   patch_core_jar "${jd_home}"
   start_jd "${jd_home}"
   echo
-  echo "Done. Next:"
-  echo "  1) Load the browser companion (see ../README.md) — Firefox or Chromium/Vivaldi"
-  echo "  2) Add link: https://ankergames.net/game/…"
-  echo "  3) Solve Turnstile; keep the AnkerGames tab open while JD downloads"
+  if [[ "${lang}" == de ]]; then
+    echo "Plugin fertig."
+    echo
+    echo "WICHTIG — tippe keine Zahl in die Shell."
+    echo "Wenn du von der Repo-Wurzel kommst, macht ./install.sh als Nächstes"
+    echo "die Browser-Erweiterung. Sonst dort ausführen:"
+    echo
+    echo "  cd \"${ROOT_DIR}\" && ./install.sh"
+    echo
+    echo "Danach in JDownloader: Link ankergames.net/game/… hinzufügen,"
+    echo "Turnstile lösen, Tab offen lassen."
+  else
+    echo "Plugin done."
+    echo
+    echo "IMPORTANT — do not type a number into the shell."
+    echo "From the repo root, ./install.sh continues with the browser add-on."
+    echo "Or run:"
+    echo
+    echo "  cd \"${ROOT_DIR}\" && ./install.sh"
+    echo
+    echo "Then in JDownloader: add ankergames.net/game/…,"
+    echo "solve Turnstile, keep the tab open."
+  fi
 }
 
 main "$@"
