@@ -313,16 +313,31 @@ function relayPushUrl(relayBase) {
 
 function signalRelayStart(pushUrl, extraHeaders) {
   const startHeaders = Object.assign({ "Content-Type": "application/json" }, extraHeaders || {});
-  return fetch(pushUrl + "?phase=start", {
-    method: "POST",
-    headers: startHeaders,
-    body: "{}"
-  }).then(function (s) {
-    if (!s.ok) {
-      throw new Error("Relay start HTTP " + s.status);
-    }
-    console.log("[JD Turnstile] relay phase=start OK");
-  });
+  function once() {
+    return fetch(pushUrl + "?phase=start", {
+      method: "POST",
+      headers: startHeaders,
+      body: "{}"
+    }).then(function (s) {
+      if (!s.ok) {
+        throw new Error("Relay start HTTP " + s.status);
+      }
+      console.log("[JD Turnstile] relay phase=start OK");
+    });
+  }
+  /* JD may still be opening the relay — retry connection refused / Failed to fetch. */
+  function attempt(left) {
+    return once().catch(function (err) {
+      const msg = String(err && err.message ? err.message : err);
+      if (left <= 0) {
+        throw new Error("Relay: " + msg);
+      }
+      return sleep(200).then(function () {
+        return attempt(left - 1);
+      });
+    });
+  }
+  return attempt(25);
 }
 
 function signalRelayEnd(pushUrl) {
@@ -350,23 +365,30 @@ function pushRelayChunk(pushUrl, bytes) {
  * NOT Java — so JA4 matches a real browser. Still weaker than tab-context fetch
  * because CF inter-request signals prefer the Turnstile tab.
  */
-function pipeCdnViaBackground(cdnUrl, relayBase) {
-  const pushUrl = relayPushUrl(relayBase);
-  console.log("[JD Turnstile] CDN fetch→relay (background)", cdnUrl.slice(0, 80));
-
-  /* Do NOT set Referer here — it is a forbidden fetch header and throws "Failed to fetch". */
-  return fetch(cdnUrl, {
-    credentials: "include",
-    redirect: "follow",
-    cache: "no-store"
+function fetchCdnBytes(cdnUrl) {
+  /* Never set Referer — forbidden fetch header → Failed to fetch. */
+  return fetch(cdnUrl, { credentials: "include", redirect: "follow", cache: "no-store" }).catch(function (err) {
+    console.warn("[JD Turnstile] CDN fetch credentials=include failed, retry omit", err);
+    return fetch(cdnUrl, { credentials: "omit", redirect: "follow", cache: "no-store" });
   }).then(function (cdnResp) {
     if (!cdnResp.ok) {
       throw new Error("CDN HTTP " + cdnResp.status);
     }
     const contentType = cdnResp.headers.get("Content-Type") || "application/octet-stream";
     if (/text\/html/i.test(contentType)) {
-      throw new Error("CDN returned HTML (WAF/challenge) — not a file stream");
+      throw new Error("CDN returned HTML (WAF/challenge)");
     }
+    return cdnResp;
+  }).catch(function (err) {
+    throw new Error("CDN: " + (err && err.message ? err.message : err));
+  });
+}
+
+function pipeCdnViaBackground(cdnUrl, relayBase) {
+  const pushUrl = relayPushUrl(relayBase);
+  console.log("[JD Turnstile] CDN fetch→relay (background)", cdnUrl.slice(0, 80));
+  return fetchCdnBytes(cdnUrl).then(function (cdnResp) {
+    const contentType = cdnResp.headers.get("Content-Type") || "application/octet-stream";
     const cl = cdnResp.headers.get("Content-Length");
     console.log("[JD Turnstile] CDN headers OK", contentType, cl || "(unknown size)");
     return signalRelayStart(pushUrl, {
@@ -451,38 +473,54 @@ function ensureOffscreenDocument() {
     return Promise.resolve(false);
   }
   const offUrl = api.runtime.getURL("offscreen.html");
-  if (api.runtime.getContexts) {
-    return api.runtime
-      .getContexts({ contextTypes: ["OFFSCREEN_DOCUMENT"], documentUrls: [offUrl] })
-      .then(function (ctxs) {
-        if (ctxs && ctxs.length) {
-          return true;
-        }
-        return api.offscreen
-          .createDocument({
-            url: "offscreen.html",
-            reasons: ["BLOBS"],
-            justification: "Stream AnkerGames CDN file into JDownloader localhost relay"
-          })
-          .then(function () {
-            return true;
-          });
-      })
-      .catch(function (err) {
-        console.warn("[JD Turnstile] offscreen unavailable", err);
-        return false;
-      });
-  }
-  return api.offscreen
-    .createDocument({
+  function create() {
+    return api.offscreen.createDocument({
       url: "offscreen.html",
       reasons: ["BLOBS"],
       justification: "Stream AnkerGames CDN file into JDownloader localhost relay"
-    })
+    });
+  }
+  const ready = api.runtime.getContexts
+    ? api.runtime.getContexts({ contextTypes: ["OFFSCREEN_DOCUMENT"], documentUrls: [offUrl] }).then(function (ctxs) {
+        if (ctxs && ctxs.length) {
+          return true;
+        }
+        return create().then(function () {
+          return true;
+        });
+      })
+    : create().then(function () {
+        return true;
+      });
+  return ready
     .then(function () {
-      return true;
+      /* Wait until offscreen.js listener is alive (Brave/Vivaldi race). */
+      function ping(left) {
+        return new Promise(function (resolve, reject) {
+          try {
+            api.runtime.sendMessage({ type: "jdt-offscreen-ping" }, function (resp) {
+              const err = api.runtime.lastError;
+              if (!err && resp && resp.ok) {
+                resolve(true);
+                return;
+              }
+              if (left <= 0) {
+                reject(new Error("offscreen not ready"));
+                return;
+              }
+              setTimeout(function () {
+                ping(left - 1).then(resolve, reject);
+              }, 50);
+            });
+          } catch (e) {
+            reject(e);
+          }
+        });
+      }
+      return ping(40);
     })
-    .catch(function () {
+    .catch(function (err) {
+      console.warn("[JD Turnstile] offscreen unavailable", err);
       return false;
     });
 }
@@ -517,10 +555,9 @@ function pipeCdnViaOffscreen(cdnUrl, relayBase) {
 }
 
 /**
- * After do=solve: stream CDN→relay.
- * Firefox MV2 used a persistent background page; Chromium MV3 prefers an offscreen
- * document (SW fetch is unreliable). Tab fetch hits page CORS → Failed to fetch →
- * AnkerGames navigates to dlproxy → Vivaldi save dialog.
+ * Stream CDN→relay. Never use tab-page fetch as fallback: page CORS → Failed to fetch
+ * and AnkerGames then navigates to dlproxy (browser save dialog). Firefox MV2 background
+ * page ≈ Chromium offscreen document.
  */
 function startCdnPipe(cdnUrl, relayBase, tabId) {
   if (tabId != null) {
@@ -551,13 +588,7 @@ function startCdnPipe(cdnUrl, relayBase, tabId) {
     .then(okDone)
     .catch(function (err) {
       console.warn("[JD Turnstile] offscreen failed, trying SW fetch", err);
-      return pipeCdnViaBackground(cdnUrl, relayBase).then(okDone);
-    })
-    .catch(function (err) {
-      console.warn("[JD Turnstile] SW fetch failed, trying tab", err);
-      return pipeCdnViaTab(tabId, cdnUrl, relayBase).catch(function (err2) {
-        return failDone(err2);
-      });
+      return pipeCdnViaBackground(cdnUrl, relayBase).then(okDone).catch(failDone);
     });
 }
 
@@ -670,15 +701,83 @@ function beginRelayTransfer(opts) {
   }
 
   console.log("[JD Turnstile] do=solve then pipe", key, cdnUrl.slice(0, 60));
-  return reportSolvedToJd(callbackUrl, {
+  armDlproxySessionRules();
+  sweepDlproxyDownloads();
+  /* Notify JD and start CDN→relay in parallel — JD waits on /file for phase=start. */
+  const solved = reportSolvedToJd(callbackUrl, {
     url: cdnUrl,
     userAgent: opts.userAgent || (typeof navigator !== "undefined" ? navigator.userAgent : "") || "",
     via: "relay",
     relayUrl: relayBase.replace(/\/$/, "") + "/file"
   }).then(function (resp) {
     console.log("[JD Turnstile] do=solve HTTP", resp && resp.status);
-    return startCdnPipe(cdnUrl, relayBase, tabId);
   });
+  const piped = startCdnPipe(cdnUrl, relayBase, tabId);
+  return Promise.all([solved, piped]).then(function () {});
+}
+
+/** High-priority session redirect while a pipe is active (Brave/Vivaldi sometimes miss static rules). */
+function armDlproxySessionRules() {
+  if (!api.declarativeNetRequest || !api.declarativeNetRequest.updateSessionRules) {
+    return;
+  }
+  const hold = api.runtime.getURL("hold.html");
+  /* Only main/sub frame — never block xmlhttprequest/other or the CDN→relay fetch dies. */
+  api.declarativeNetRequest
+    .updateSessionRules({
+      removeRuleIds: [9001],
+      addRules: [
+        {
+          id: 9001,
+          priority: 100,
+          action: { type: "redirect", redirect: { extensionPath: "/hold.html" } },
+          condition: {
+            urlFilter: "||dlproxy.uk^",
+            resourceTypes: ["main_frame", "sub_frame"]
+          }
+        }
+      ]
+    })
+    .then(function () {
+      console.log("[JD Turnstile] session DNR armed", hold.slice(0, 40));
+    })
+    .catch(function (err) {
+      console.warn("[JD Turnstile] session DNR failed", err);
+    });
+}
+
+function sweepDlproxyDownloads() {
+  if (!api.downloads || !api.downloads.search) {
+    return;
+  }
+  api.downloads
+    .search({ state: "in_progress" })
+    .then(function (items) {
+      (items || []).forEach(function (it) {
+        const url = String(it.url || it.finalUrl || "");
+        const name = String(it.filename || "");
+        if (DLPROXY_RE.test(url) || /\.zip$/i.test(name)) {
+          killDownload(it.id, "sweep");
+        }
+      });
+    })
+    .catch(function () {});
+  setTimeout(function () {
+    if (!pipeSession) {
+      return;
+    }
+    api.downloads
+      .search({})
+      .then(function (items) {
+        (items || []).forEach(function (it) {
+          const url = String(it.url || it.finalUrl || "");
+          if (DLPROXY_RE.test(url) && it.state !== "complete") {
+            killDownload(it.id, "sweep2");
+          }
+        });
+      })
+      .catch(function () {});
+  }, 1500);
 }
 
 /*

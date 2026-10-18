@@ -18,10 +18,17 @@
     }
     document.documentElement.setAttribute("data-jdt-fetch-hook", "1");
     var script = document.createElement("script");
+    /*
+     * Must run in the PAGE world (not the isolated content-script world).
+     * Chromium isolation means location/open patches in solver.js never see
+     * AnkerGames' own navigation → browser Save dialog for dlproxy.
+     */
     script.textContent =
       "(function(){" +
       "if(window.__jdtFetchHooked)return;window.__jdtFetchHooked=true;" +
+      "function isDl(u){return !!(u&&/dlproxy\\.uk/i.test(String(u)));}" +
       "function emit(link){try{window.postMessage({source:'jdt-turnstile',type:'jdt-cdn-link',link:String(link||'')},'*');}catch(e){}}" +
+      "function blockNav(u,why){if(!isDl(u))return false;try{console.log('[JD Turnstile] page-world block',why,String(u).slice(0,60));}catch(e){}try{window.stop();}catch(e2){}return true;}" +
       "var of=window.fetch;" +
       "if(typeof of==='function'){window.fetch=function(){var args=arguments;return of.apply(this,args).then(function(r){" +
       "try{var u='';var a0=args[0];if(typeof a0==='string')u=a0;else if(a0&&a0.url)u=a0.url;" +
@@ -38,6 +45,15 @@
       "try{var u=String(x.__jdtUrl||'');if(!/\\/link(\\?|$)/i.test(u))return;var t=x.responseText||'';" +
       "if(t.charAt(0)==='{'){var j=JSON.parse(t);if(j&&j.link)emit(j.link);}" +
       "}catch(e){}});return sx.apply(this,arguments);};}" +
+      "try{var ro=window.open;window.open=function(u){if(blockNav(u,'open'))return null;return ro.apply(this,arguments);};}catch(e){}" +
+      "try{var la=Location.prototype.assign;Location.prototype.assign=function(u){if(blockNav(u,'assign'))return;return la.call(this,u);};" +
+      "var lr=Location.prototype.replace;Location.prototype.replace=function(u){if(blockNav(u,'replace'))return;return lr.call(this,u);};}catch(e){}" +
+      "try{var desc=Object.getOwnPropertyDescriptor(Location.prototype,'href');" +
+      "if(desc&&desc.set){Object.defineProperty(Location.prototype,'href',{configurable:true,enumerable:true," +
+      "get:function(){return desc.get.call(this);}," +
+      "set:function(v){if(blockNav(v,'href'))return;return desc.set.call(this,v);}});}}catch(e){}" +
+      "document.addEventListener('click',function(e){try{var a=e.target&&e.target.closest&&e.target.closest('a[href]');" +
+      "if(a&&isDl(a.href)){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();blockNav(a.href,'click');}}catch(x){}},true);" +
       "})();";
     (document.documentElement || document.head || document.body).appendChild(script);
     script.remove();
