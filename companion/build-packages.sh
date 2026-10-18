@@ -16,7 +16,7 @@ echo "Building Chromium ZIP v${VER} ..."
   cd "${CH}"
   zip -r -FS "${DIST}/jd-turnstile-companion-chromium-${VER}.zip" \
     manifest.json background.js update-check.js solver.js local-hook.js ankergames-hook.js cdn-pipe.js \
-    dnr-rules.json hold.html \
+    dnr-rules.json hold.html offscreen.html offscreen.js \
     icons icon48.png \
     -x "*.md" -x ".git*"
 )

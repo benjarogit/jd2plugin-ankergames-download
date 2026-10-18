@@ -72,6 +72,8 @@ class BuildPackagesTests(unittest.TestCase):
             self.assertIn("background.js", names)
             self.assertIn("dnr-rules.json", names)
             self.assertIn("hold.html", names)
+            self.assertIn("offscreen.html", names)
+            self.assertIn("offscreen.js", names)
 
 
 class SanitizeLogicTests(unittest.TestCase):

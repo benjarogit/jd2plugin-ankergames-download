@@ -446,11 +446,81 @@ function pipeCdnViaTab(tabId, cdnUrl, relayBase) {
   });
 }
 
+function ensureOffscreenDocument() {
+  if (!api.offscreen || !api.offscreen.createDocument) {
+    return Promise.resolve(false);
+  }
+  const offUrl = api.runtime.getURL("offscreen.html");
+  if (api.runtime.getContexts) {
+    return api.runtime
+      .getContexts({ contextTypes: ["OFFSCREEN_DOCUMENT"], documentUrls: [offUrl] })
+      .then(function (ctxs) {
+        if (ctxs && ctxs.length) {
+          return true;
+        }
+        return api.offscreen
+          .createDocument({
+            url: "offscreen.html",
+            reasons: ["BLOBS"],
+            justification: "Stream AnkerGames CDN file into JDownloader localhost relay"
+          })
+          .then(function () {
+            return true;
+          });
+      })
+      .catch(function (err) {
+        console.warn("[JD Turnstile] offscreen unavailable", err);
+        return false;
+      });
+  }
+  return api.offscreen
+    .createDocument({
+      url: "offscreen.html",
+      reasons: ["BLOBS"],
+      justification: "Stream AnkerGames CDN file into JDownloader localhost relay"
+    })
+    .then(function () {
+      return true;
+    })
+    .catch(function () {
+      return false;
+    });
+}
+
+function pipeCdnViaOffscreen(cdnUrl, relayBase) {
+  return ensureOffscreenDocument().then(function (ok) {
+    if (!ok) {
+      return Promise.reject(new Error("offscreen unavailable"));
+    }
+    return new Promise(function (resolve, reject) {
+      try {
+        api.runtime.sendMessage(
+          { type: "jdt-offscreen-pipe", cdnUrl: cdnUrl, relayBase: relayBase },
+          function (resp) {
+            const err = api.runtime.lastError;
+            if (err) {
+              reject(new Error(err.message || String(err)));
+              return;
+            }
+            if (!resp || !resp.ok) {
+              reject(new Error((resp && resp.error) || "offscreen pipe failed"));
+              return;
+            }
+            resolve(resp);
+          }
+        );
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+}
+
 /**
- * After do=solve: stream CDN→relay from the extension background.
- * Tab-context fetch to dlproxy hits page CORS ("Failed to fetch") and then the
- * site navigates so Vivaldi saves the file — background host_permissions avoid that.
- * Keep the AnkerGames tab open for status; alarms keep the MV3 worker alive.
+ * After do=solve: stream CDN→relay.
+ * Firefox MV2 used a persistent background page; Chromium MV3 prefers an offscreen
+ * document (SW fetch is unreliable). Tab fetch hits page CORS → Failed to fetch →
+ * AnkerGames navigates to dlproxy → Vivaldi save dialog.
  */
 function startCdnPipe(cdnUrl, relayBase, tabId) {
   if (tabId != null) {
@@ -459,28 +529,34 @@ function startCdnPipe(cdnUrl, relayBase, tabId) {
       text: "JD is downloading — keep this tab open until finished…"
     }).catch(function () {});
   }
-  return pipeCdnViaBackground(cdnUrl, relayBase)
-    .then(function () {
-      if (tabId != null) {
-        sendTabMessage(tabId, {
-          type: "jdt-status",
-          text: "Stream finished — you can close this tab."
-        }).catch(function () {});
-      }
-      api.runtime.sendMessage({ type: "jdt-pipe-done", ok: true }).catch(function () {});
-      closePipeSessionTabs();
+  function okDone() {
+    if (tabId != null) {
+      sendTabMessage(tabId, {
+        type: "jdt-status",
+        text: "Stream finished — you can close this tab."
+      }).catch(function () {});
+    }
+    closePipeSessionTabs();
+  }
+  function failDone(err) {
+    const msg = String(err && err.message ? err.message : err);
+    console.error("[JD Turnstile] pipe failed", msg);
+    if (tabId != null) {
+      sendTabMessage(tabId, { type: "jdt-status", text: "Pipe failed: " + msg }).catch(function () {});
+    }
+    return Promise.reject(err);
+  }
+
+  return pipeCdnViaOffscreen(cdnUrl, relayBase)
+    .then(okDone)
+    .catch(function (err) {
+      console.warn("[JD Turnstile] offscreen failed, trying SW fetch", err);
+      return pipeCdnViaBackground(cdnUrl, relayBase).then(okDone);
     })
     .catch(function (err) {
-      console.warn("[JD Turnstile] background pipe failed, trying tab fetch", err);
+      console.warn("[JD Turnstile] SW fetch failed, trying tab", err);
       return pipeCdnViaTab(tabId, cdnUrl, relayBase).catch(function (err2) {
-        console.error("[JD Turnstile] tab pipe also failed", err2);
-        if (tabId != null) {
-          sendTabMessage(tabId, {
-            type: "jdt-status",
-            text: "Pipe failed: " + (err2 && err2.message ? err2.message : err2)
-          }).catch(function () {});
-        }
-        throw err2;
+        return failDone(err2);
       });
     });
 }
