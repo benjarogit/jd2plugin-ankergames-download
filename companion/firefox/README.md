@@ -1,10 +1,9 @@
-# JD Turnstile Companion — Firefox
+# JD Turnstile Companion (Firefox)
 
-Unsigned **`.xpi`**. Prefer Firefox Developer Edition / Nightly:
+Manual install (Developer Edition / Nightly recommended):
 
 1. `about:config` → `xpinstall.signatures.required` = `false`
-2. `about:addons` → Install Add-on From File → `dist/*.xpi`
+2. `about:addons` → Install Add-on From File → `../dist/*.xpi`  
+   or temporary: `about:debugging` → this folder’s `manifest.json`
 
-Or temporary: `about:debugging` → Load Temporary Add-on → this folder’s `manifest.json`.
-
-Full steps (EN/DE): [INSTALL-BROWSER.md](../INSTALL-BROWSER.md)
+See root README.md / README.de.md.

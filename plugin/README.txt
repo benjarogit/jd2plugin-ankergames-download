@@ -1,11 +1,11 @@
-AnkerGames JDownloader 2 plugin package
-=======================================
+AnkerGames — JDownloader 2 plugin
+=================================
 
-Run install.sh (Linux/macOS) or install.bat / install.ps1 (Windows).
+Manual install: see ../README.md (English) or ../README.de.md (Deutsch).
 
-This installs:
-  - AnkergamesNet hoster + crawler
-  - AnkergamesCdnRelay (localhost bridge)
-  - Core.jar Turnstile patch (relay / gameUrl / downloadId metas)
+Optional copy helper:
+  Linux/macOS:  ./install.sh
+  Windows:      install.bat  or  install.ps1
 
-Then load the browser companion from ../companion/ (see ../README.md).
+This copies hoster + crawler + AnkergamesCdnRelay and patches Core.jar.
+Then install the browser add-on from ../companion/ (manual — see root README).

@@ -1,10 +1,9 @@
-# JD Turnstile Companion — Chromium family
+# JD Turnstile Companion (Chromium)
 
-Unsigned **`.crx`** for Chrome, Chromium, Vivaldi, Brave, Edge.
+Manual install:
 
-```bash
-cd companion && ./install-chromium.sh
-# or from repo root: ./install.sh → type vivaldi / chrome / …
-```
+1. Open `chrome://extensions` / `vivaldi://extensions` / …
+2. Enable Developer mode
+3. Load unpacked → this folder
 
-Full steps (EN/DE): [INSTALL-BROWSER.md](../INSTALL-BROWSER.md)
+See root README.md / README.de.md.

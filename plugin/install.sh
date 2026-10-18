@@ -190,27 +190,11 @@ main() {
   start_jd "${jd_home}"
   echo
   if [[ "${lang}" == de ]]; then
-    echo "Plugin fertig."
-    echo
-    echo "WICHTIG — tippe keine Zahl in die Shell."
-    echo "Wenn du von der Repo-Wurzel kommst, macht ./install.sh als Nächstes"
-    echo "die Browser-Erweiterung. Sonst dort ausführen:"
-    echo
-    echo "  cd \"${ROOT_DIR}\" && ./install.sh"
-    echo
-    echo "Danach in JDownloader: Link ankergames.net/game/… hinzufügen,"
-    echo "Turnstile lösen, Tab offen lassen."
+    echo "JDownloader-Plugin fertig."
+    echo "Als Nächstes manuell die Browser-Erweiterung laden — siehe README.de.md (Schritt 2)."
   else
-    echo "Plugin done."
-    echo
-    echo "IMPORTANT — do not type a number into the shell."
-    echo "From the repo root, ./install.sh continues with the browser add-on."
-    echo "Or run:"
-    echo
-    echo "  cd \"${ROOT_DIR}\" && ./install.sh"
-    echo
-    echo "Then in JDownloader: add ankergames.net/game/…,"
-    echo "solve Turnstile, keep the tab open."
+    echo "JDownloader plugin done."
+    echo "Next: load the browser add-on manually — see README.md (step 2)."
   fi
 }
 

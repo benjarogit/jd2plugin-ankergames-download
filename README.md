@@ -1,55 +1,80 @@
 # AnkerGames for JDownloader 2
 
-[English](#install) · [Deutsch](README.de.md)
+[English](#english) · [Deutsch](README.de.md)
 
-Downloads games from [ankergames.net](https://ankergames.net) in **JDownloader** even though Cloudflare blocks JD’s Java client.
+Download games from [ankergames.net](https://ankergames.net) with **JDownloader**.  
+Cloudflare blocks JD’s Java client — so you solve the captcha in a **browser**, and a small **browser add-on** sends the file to JD.
 
-**In short:** You solve the captcha in your browser. A small browser add-on streams the file to JD. JD saves it and shows progress.
+**Not affiliated** with AppWork / JDownloader / AnkerGames.  
+**MyJDownloader is not required.** Safari is not supported.
 
 ---
 
-## Install
+<a id="english"></a>
+
+## Install (manual, all platforms)
+
+Two steps. Nothing installs itself in the background.
+
+### 1) JDownloader plugin
+
+1. Stop JDownloader.
+2. Open the folder where JD is installed  
+   (often `~/.jd` on Linux, `%USERPROFILE%\.jd` or your JD folder on Windows).
+3. Copy everything from `plugin/plugins/` into JD’s `jd/plugins/`  
+   (keep the `hoster/`, `decrypter/`, `components/` subfolders).
+4. Patch Core (needed for the relay):
+   - Backup `Core.jar`
+   - With any zip tool, replace inside `Core.jar`:
+     - `org/jdownloader/captcha/v2/challenge/cloudflareturnstile/turnstile.html`  
+       ← from `core-patch/turnstile.html`
+     - `org/jdownloader/captcha/v2/challenge/cloudflareturnstile/CloudflareTurnstileChallenge.class`  
+       ← from `core-patch/CloudflareTurnstileChallenge.class`
+5. Start JDownloader.
+
+**Optional helper** (Linux/macOS/Windows) — only copies those files for you:
 
 ```bash
-git clone https://github.com/benjarogit/jd2plugin-ankergames-download.git
-cd jd2plugin-ankergames-download
-chmod +x install.sh
-./install.sh
+cd plugin
+./install.sh          # Linux / macOS
+install.bat           # Windows
 ```
 
-### What the script does
+### 2) Browser add-on
 
-1. Install the **JDownloader plugin** → confirm with `Y` / Enter  
-2. Type your **browser** name: `vivaldi`, `chrome`, `brave`, `edge`, or `firefox`  
-   *(don’t type a number — only the name)*
+Use the **same** browser that JDownloader opens for captchas.
 
-### Finish the browser add-on
+#### Chrome / Chromium / Vivaldi / Brave / Edge
 
-The script prepares the files and opens the right page. **You still do a few clicks:**
+1. Open the extensions page:  
+   `chrome://extensions` · `vivaldi://extensions` · `brave://extensions` · `edge://extensions`
+2. Turn **Developer mode** ON.
+3. **Load unpacked** → choose folder:  
+   `companion/chromium/`
+4. Confirm you see **JD Turnstile Companion**.
 
-**Vivaldi / Chrome / Brave / Edge**
+#### Firefox
 
-1. Turn on Developer mode  
-2. Click “Load unpacked”  
-3. Select the folder the script shows (also copied to the clipboard)
+Release Firefox blocks unsigned add-ons. Use **Firefox Developer Edition** or **Nightly**:
 
-**Firefox**
-
-1. Prefer **Firefox Developer Edition** or **Nightly**  
-2. `about:config` → `xpinstall.signatures.required` → **false**  
-3. `about:addons` → gear → Install Add-on From File → the `.xpi` from the script
-
-More detail: [companion/INSTALL-BROWSER.md](companion/INSTALL-BROWSER.md)
+1. `about:config` → `xpinstall.signatures.required` → **false**
+2. `about:addons` → gear → **Install Add-on From File…**
+3. Choose: `companion/dist/jd-turnstile-companion-firefox-*.xpi`  
+   (or load temporary: `about:debugging` → Load Temporary Add-on → `companion/firefox/manifest.json`)
 
 ---
 
-## Use it
+## Use
 
-1. In JDownloader add a link, e.g. `https://ankergames.net/game/…`  
-2. Solve Turnstile in the browser  
-3. **Keep the AnkerGames tab open** until JD finishes  
+1. In JDownloader, add e.g. `https://ankergames.net/game/…`
+2. Solve Turnstile in the browser.
+3. **Keep the AnkerGames tab open** until the download finishes in JD.
 
-Use the same browser for captchas and the add-on. MyJDownloader is **not** required.
+---
+
+## How it works (one sentence)
+
+The browser fetches the CDN file (real TLS); the add-on streams it to `127.0.0.1`; JD saves it from there.
 
 ---
 
@@ -57,17 +82,7 @@ Use the same browser for captchas and the add-on. MyJDownloader is **not** requi
 
 | Problem | Fix |
 |---------|-----|
-| Add-on not visible | Run `./install.sh` again (skip plugin with `n`); Developer mode + Load unpacked |
-| Firefox “could not be verified” | Developer Edition + `xpinstall.signatures.required = false` |
-| JD stuck at 0 bytes | Keep AnkerGames tab open; companion v1.4.2+ |
-| Browser downloads the ZIP itself | Update companion; don’t open the CDN link manually |
-
----
-
-## How it works (short)
-
-Cloudflare blocks JDownloader (Java). The **browser add-on** fetches the file and posts it to `127.0.0.1` — JD only downloads locally.
-
----
-
-Not affiliated with AppWork / JDownloader / AnkerGames.
+| Add-on missing | Repeat step 2; Developer mode on |
+| Firefox “not verified” | Dev Edition/Nightly + `xpinstall.signatures.required = false` |
+| JD at 0 B | Keep AnkerGames tab open |
+| Browser downloads the ZIP | Don’t open `*.dlproxy.uk` yourself; reload the add-on |
