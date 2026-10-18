@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="companion/assets/logo-512.png" width="200" alt="AnkerGames × JDownloader" />
+  <img src="companion/assets/logo.png" width="200" alt="AnkerGames × JDownloader" />
 </p>
 
 <h1 align="center">AnkerGames → JDownloader&nbsp;2</h1>
