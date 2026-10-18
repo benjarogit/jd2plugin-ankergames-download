@@ -30,15 +30,17 @@ class PackageLayoutTests(unittest.TestCase):
         for name in ("relayUrl", "gameUrl", "downloadId"):
             self.assertIn(f'name="{name}"', html)
 
-    def test_companion_manifests(self) -> None:
-        ff = json.loads((ROOT / "companion/firefox/manifest.json").read_text())
+    def test_companion_manifest(self) -> None:
         ch = json.loads((ROOT / "companion/chromium/manifest.json").read_text())
-        self.assertEqual(ff["version"], ch["version"])
-        self.assertIn("icons", ff)
+        self.assertEqual(ch["manifest_version"], 3)
         self.assertIn("icons", ch)
+        self.assertIn("declarativeNetRequest", ch["permissions"])
+        self.assertTrue((ROOT / "companion/chromium/dnr-rules.json").is_file())
+        self.assertTrue((ROOT / "companion/chromium/hold.html").is_file())
         for size in ("16", "48", "128"):
             self.assertTrue((ROOT / "companion/chromium/icons" / f"icon{size}.png").is_file())
-            self.assertTrue((ROOT / "companion/firefox/icons" / f"icon{size}.png").is_file())
+        self.assertFalse((ROOT / "companion/firefox/manifest.json").exists())
+        self.assertFalse((ROOT / "updates/firefox.json").exists())
 
     def test_no_account_login_in_sources(self) -> None:
         hoster = (ROOT / "src/jd/plugins/hoster/AnkergamesNet.java").read_text(encoding="utf-8")
@@ -53,30 +55,23 @@ class PackageLayoutTests(unittest.TestCase):
         tree = ET.parse(ROOT / "updates/chromium.xml")
         root = tree.getroot()
         self.assertTrue(any("gupdate" in (el.tag or "") for el in [root, *root.iter()]))
-
-    def test_firefox_update_feed_json(self) -> None:
-        data = json.loads((ROOT / "updates/firefox.json").read_text())
-        self.assertIn("addons", data)
+        self.assertFalse((ROOT / "updates/firefox.json").exists())
 
 
 class BuildPackagesTests(unittest.TestCase):
     def test_build_packages_script(self) -> None:
         script = ROOT / "companion/build-packages.sh"
         self.assertTrue(script.is_file())
-        # Packaging needs zip; CRX pack is optional if no Chrome binary/display.
         subprocess.check_call(["bash", str(script)], cwd=str(ROOT / "companion"))
-        ver = json.loads((ROOT / "companion/firefox/manifest.json").read_text())["version"]
-        xpi = ROOT / f"companion/dist/jd-turnstile-companion-firefox-{ver}.xpi"
+        ver = json.loads((ROOT / "companion/chromium/manifest.json").read_text())["version"]
         zipp = ROOT / f"companion/dist/jd-turnstile-companion-chromium-{ver}.zip"
-        self.assertTrue(xpi.is_file(), xpi)
         self.assertTrue(zipp.is_file(), zipp)
-        with zipfile.ZipFile(xpi) as zf:
-            names = zf.namelist()
-            self.assertIn("manifest.json", names)
-            self.assertIn("background.js", names)
         with zipfile.ZipFile(zipp) as zf:
             names = zf.namelist()
             self.assertIn("manifest.json", names)
+            self.assertIn("background.js", names)
+            self.assertIn("dnr-rules.json", names)
+            self.assertIn("hold.html", names)
 
 
 class SanitizeLogicTests(unittest.TestCase):

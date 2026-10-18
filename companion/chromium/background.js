@@ -450,17 +450,42 @@ function pipeCdnViaTab(tabId, cdnUrl, relayBase) {
 }
 
 /**
- * After do=solve: start tab pipe (preferred) or background. Does not wait for GB transfer
- * (MV3 service workers would die). Completion → jdt-pipe-done.
+ * After do=solve: stream CDN→relay from the extension background.
+ * Tab-context fetch to dlproxy hits page CORS ("Failed to fetch") and then the
+ * site navigates so Vivaldi saves the file — background host_permissions avoid that.
+ * Keep the AnkerGames tab open for status; alarms keep the MV3 worker alive.
  */
 function startCdnPipe(cdnUrl, relayBase, tabId) {
-  return pipeCdnViaTab(tabId, cdnUrl, relayBase).catch(function (err) {
-    console.warn("[JD Turnstile] tab pipe failed, using background fetch", err);
-    /* Background path must run to completion (Firefox MV2 OK; Chromium: keep tab open preferred). */
-    return pipeCdnViaBackground(cdnUrl, relayBase).then(function () {
+  if (tabId != null) {
+    sendTabMessage(tabId, {
+      type: "jdt-status",
+      text: "JD is downloading — keep this tab open until finished…"
+    }).catch(function () {});
+  }
+  return pipeCdnViaBackground(cdnUrl, relayBase)
+    .then(function () {
+      if (tabId != null) {
+        sendTabMessage(tabId, {
+          type: "jdt-status",
+          text: "Stream finished — you can close this tab."
+        }).catch(function () {});
+      }
       api.runtime.sendMessage({ type: "jdt-pipe-done", ok: true }).catch(function () {});
+      closePipeSessionTabs();
+    })
+    .catch(function (err) {
+      console.warn("[JD Turnstile] background pipe failed, trying tab fetch", err);
+      return pipeCdnViaTab(tabId, cdnUrl, relayBase).catch(function (err2) {
+        console.error("[JD Turnstile] tab pipe also failed", err2);
+        if (tabId != null) {
+          sendTabMessage(tabId, {
+            type: "jdt-status",
+            text: "Pipe failed: " + (err2 && err2.message ? err2.message : err2)
+          }).catch(function () {});
+        }
+        throw err2;
+      });
     });
-  });
 }
 
 function gateKey(job, callbackUrl, cdnUrl) {
@@ -579,72 +604,14 @@ function beginRelayTransfer(opts) {
     relayUrl: relayBase.replace(/\/$/, "") + "/file"
   }).then(function (resp) {
     console.log("[JD Turnstile] do=solve HTTP", resp && resp.status);
-    if (tabId != null) {
-      sendTabMessage(tabId, {
-        type: "jdt-status",
-        text: "JD is downloading — keep this tab open until the stream finishes."
-      }).catch(function () {});
-    }
     return startCdnPipe(cdnUrl, relayBase, tabId);
   });
 }
 
-/** Make extension CDN requests look like a browser download (Referer, no Origin). */
-function installCdnHeaderSpoof() {
-  if (!api.webRequest || !api.webRequest.onBeforeSendHeaders) {
-    return;
-  }
-  try {
-    api.webRequest.onBeforeSendHeaders.addListener(
-      function (details) {
-        if (!/dlproxy\.uk/i.test(details.url)) {
-          return {};
-        }
-        const headers = (details.requestHeaders || []).filter(function (h) {
-          const n = String(h.name).toLowerCase();
-          return n !== "origin" && n !== "referer";
-        });
-        headers.push({ name: "Referer", value: "https://ankergames.net/" });
-        headers.push({ name: "Accept", value: "application/octet-stream,*/*;q=0.8" });
-        return { requestHeaders: headers };
-      },
-      { urls: ["*://*.dlproxy.uk/*", "*://dlproxy.uk/*"] },
-      ["blocking", "requestHeaders"]
-    );
-  } catch (e) {
-    console.warn("[JD Turnstile] header spoof unavailable", e);
-  }
-}
-installCdnHeaderSpoof();
-
-/**
- * Hard-block any tab navigation to the CDN. Extension fetch (tabId < 0) is allowed.
- * This is what keeps AnkerGames' window.location = cdn from starting a browser download.
+/*
+ * No webRequestBlocking: content-script hooks + downloads.cancel + webNavigation
+ * bounce keep the AnkerGames tab alive (also friendlier for AMO auto-signing).
  */
-function installCdnNavBlock() {
-  if (!api.webRequest || !api.webRequest.onBeforeRequest) {
-    return;
-  }
-  try {
-    api.webRequest.onBeforeRequest.addListener(
-      function (details) {
-        if (details.tabId < 0) {
-          return {};
-        }
-        console.log("[JD Turnstile] blocked tab CDN navigation", details.type, details.url.slice(0, 80));
-        return { cancel: true };
-      },
-      {
-        urls: ["*://*.dlproxy.uk/*", "*://dlproxy.uk/*"],
-        types: ["main_frame", "sub_frame"]
-      },
-      ["blocking"]
-    );
-  } catch (e) {
-    console.warn("[JD Turnstile] webRequest block unavailable", e);
-  }
-}
-installCdnNavBlock();
 
 /** Safety net: if anything still queues a browser download from dlproxy, cancel it. */
 function installDownloadGuard() {

@@ -27,7 +27,6 @@ jobs:
         with:
           name: companion-packages
           path: |
-            companion/dist/*.xpi
             companion/dist/*.zip
             companion/dist/*.crx
           if-no-files-found: warn

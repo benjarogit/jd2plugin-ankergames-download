@@ -11,3 +11,5 @@ __pycache__/
 .amo-upload-uuid
 web-ext-artifacts/
 companion/dist/signed/
+companion/dist/*firefox*
+companion/dist/signed/

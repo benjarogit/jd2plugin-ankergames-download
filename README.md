@@ -6,7 +6,8 @@
 
 <p align="center">
   AnkerGames downloads that work in JDownloader<br/>
-  Manual install · No MyJD · No AnkerGames login
+  Manual install · No MyJD · No AnkerGames login<br/>
+  Companion for Chromium browsers (Chrome, Vivaldi, Brave, Edge)
 </p>
 
 <p align="center">
@@ -17,14 +18,14 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/benjarogit/jd2plugin-ankergames-download?style=flat-square&label=release" alt="Release" />
-  <img src="https://img.shields.io/badge/Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=flat-square" alt="Platform" />
+  <img src="https://img.shields.io/badge/Chrome%20%7C%20Vivaldi%20%7C%20Brave%20%7C%20Edge-lightgrey?style=flat-square" alt="Browsers" />
   · <a href="README.de.md">Deutsch</a>
 </p>
 
 ---
 
 [ankergames.net](https://ankergames.net) is behind Cloudflare. JD’s Java client gets blocked.  
-This package adds a **JD plugin** + **browser companion** so Turnstile runs in a real browser and the file streams to JD.
+This package adds a **JD plugin** + **Chromium companion** so Turnstile runs in a real browser and the file streams to JD.
 
 > Unofficial — not affiliated with AppWork, JDownloader, or AnkerGames.
 
@@ -37,8 +38,10 @@ This package adds a **JD plugin** + **browser companion** so Turnstile runs in a
 | 0 | Need JD? → [Download JDownloader 2](https://jdownloader.org/jdownloader2) |
 | 1 | [Download this ZIP](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest/download/ankergames-jd2-full.zip) and unpack |
 | 2 | Find JD folder → copy plugin files → patch `Core.jar` |
-| 3 | Load the browser companion |
+| 3 | Load the Chromium companion |
 | 4 | Paste game URL in JD → solve captcha → **keep the tab open** |
+
+Set JDownloader’s captcha browser to the same Chromium browser you install the companion in (Chrome / Vivaldi / Brave / Edge).
 
 <details>
 <summary><b>Find your JD folder</b></summary>
@@ -58,8 +61,6 @@ Every PC differs (installer vs portable). You need the folder with **`JDownloade
 |----|-----|
 | Windows | Double-click `plugin/find-jd-home.bat` |
 | Linux / macOS | `cd plugin && chmod +x find-jd-home.sh && ./find-jd-home.sh` |
-
-Prints JD root and plugin folder. Multiple hits → use the one your shortcut starts.
 
 <details>
 <summary>Search manually</summary>
@@ -111,16 +112,16 @@ Done when `<JD-Root>/jd/plugins/hoster/AnkergamesNet.class` exists.
 </details>
 
 <details>
-<summary><b>Browser companion</b></summary>
+<summary><b>Browser companion (Chromium)</b></summary>
 
 <br/>
 
-Use the **same browser** JD opens for captchas.
+1. Open `chrome://extensions` (or `vivaldi://extensions` / `brave://extensions` / `edge://extensions`)  
+2. Turn **Developer mode** ON  
+3. **Load unpacked** → select the folder `companion/chromium/` (not the ZIP root)  
+4. Confirm **JD Turnstile Companion** is listed  
 
-| Browser | How |
-|---------|-----|
-| Chrome / Vivaldi / Brave / Edge | Open `chrome://extensions` (or `vivaldi://extensions`) → Developer mode ON → **Load unpacked** → select the folder `companion/chromium/` (not the ZIP root) |
-| Firefox (normal) | `about:addons` → gear → **Install Add-on From File…** → signed `companion/dist/jd-turnstile-companion-firefox-1.0.0.xpi`. Until Mozilla finishes signing: `about:debugging` → This Firefox → Load Temporary Add-on → `companion/firefox/manifest.json` |
+After updates: open the extensions page → reload the companion.
 
 </details>
 
@@ -148,9 +149,8 @@ Turnstile → companion fetches CDN → localhost → JD saves file
 |---------|-----|
 | Pathfinder empty | See “Nothing found” above |
 | Plugin missing in JD | Files under `…/jd/plugins/…` + Core patch |
-| Companion missing | Load the `companion/chromium/` folder (unpacked) or the signed Firefox XPI |
-| Firefox rejects XPI | Need Mozilla-signed build · or temporary load via `about:debugging` |
-| JD at 0 B | Keep AnkerGames tab open |
+| Companion missing | Load unpacked → folder `companion/chromium/` |
 | Browser saves the ZIP | Reload companion · don’t open `*.dlproxy.uk` |
+| JD at 0 B / Pipe failed | Reload companion, keep tab open, try again |
 
 </details>

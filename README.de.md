@@ -6,7 +6,8 @@
 
 <p align="center">
   AnkerGames-Downloads, die in JDownloader laufen<br/>
-  Manuelle Installation · Kein MyJD · Kein AnkerGames-Login
+  Manuelle Installation · Kein MyJD · Kein AnkerGames-Login<br/>
+  Companion für Chromium-Browser (Chrome, Vivaldi, Brave, Edge)
 </p>
 
 <p align="center">
@@ -17,14 +18,14 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/benjarogit/jd2plugin-ankergames-download?style=flat-square&label=release" alt="Release" />
-  <img src="https://img.shields.io/badge/Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=flat-square" alt="Platform" />
+  <img src="https://img.shields.io/badge/Chrome%20%7C%20Vivaldi%20%7C%20Brave%20%7C%20Edge-lightgrey?style=flat-square" alt="Browsers" />
   · <a href="README.md">English</a>
 </p>
 
 ---
 
 [ankergames.net](https://ankergames.net) steckt hinter Cloudflare. Der Java-Client von JD wird blockiert.  
-Dieses Paket liefert **JD-Plugin** + **Browser-Companion**: Turnstile im echten Browser, Datei per localhost an JD.
+Dieses Paket liefert **JD-Plugin** + **Chromium-Companion**: Turnstile im echten Browser, Datei per localhost an JD.
 
 > Inoffiziell — nicht verbunden mit AppWork, JDownloader oder AnkerGames.
 
@@ -37,8 +38,10 @@ Dieses Paket liefert **JD-Plugin** + **Browser-Companion**: Turnstile im echten 
 | 0 | Kein JD? → [JDownloader 2 herunterladen](https://jdownloader.org/jdownloader2) |
 | 1 | [Dieses ZIP laden](https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest/download/ankergames-jd2-full.zip) und entpacken |
 | 2 | JD-Ordner finden → Plugin-Dateien kopieren → `Core.jar` patchen |
-| 3 | Browser-Companion laden |
+| 3 | Chromium-Companion laden |
 | 4 | Spiel-URL in JD → Captcha lösen → **Tab offen lassen** |
+
+In JDownloader denselben Chromium-Browser für Captchas einstellen, in dem der Companion installiert ist (Chrome / Vivaldi / Brave / Edge).
 
 <details>
 <summary><b>JD-Ordner finden</b></summary>
@@ -58,8 +61,6 @@ Bei jedem PC anders (Installer vs Portable). Du brauchst den Ordner mit **`JDown
 |----|-----------|
 | Windows | `plugin/find-jd-home.bat` doppelklicken |
 | Linux / macOS | `cd plugin && chmod +x find-jd-home.sh && ./find-jd-home.sh` |
-
-Zeigt JD-Root und Plugin-Ordner. Mehrere Treffer → die Installation deiner Verknüpfung.
 
 <details>
 <summary>Selbst suchen</summary>
@@ -111,16 +112,16 @@ Fertig bei `<JD-Root>/jd/plugins/hoster/AnkergamesNet.class`.
 </details>
 
 <details>
-<summary><b>Browser-Companion</b></summary>
+<summary><b>Browser-Companion (Chromium)</b></summary>
 
 <br/>
 
-Denselben Browser nutzen, den JD für Captchas öffnet.
+1. `chrome://extensions` öffnen (oder `vivaldi://extensions` / `brave://extensions` / `edge://extensions`)  
+2. **Entwicklermodus** einschalten  
+3. **Entpackte Erweiterung laden** → Ordner `companion/chromium/` wählen (nicht die ZIP-Wurzel)  
+4. Prüfen: **JD Turnstile Companion** steht in der Liste  
 
-| Browser | So |
-|---------|----|
-| Chrome / Vivaldi / Brave / Edge | `chrome://extensions` (bzw. `vivaldi://extensions`) → Entwicklermodus an → **Entpackte Erweiterung laden** → Ordner `companion/chromium/` wählen (nicht die ZIP-Wurzel) |
-| Firefox (normal) | `about:addons` → Zahnrad → **Add-on aus Datei installieren…** → signierte `companion/dist/jd-turnstile-companion-firefox-1.0.0.xpi`. Bis Mozilla fertig signiert: `about:debugging` → Dieser Firefox → Temporäres Add-on → `companion/firefox/manifest.json` |
+Nach Updates: Erweiterungsseite öffnen → Companion neu laden.
 
 </details>
 
@@ -148,9 +149,8 @@ Turnstile → Companion holt CDN → localhost → JD speichert
 |---------|--------|
 | Pathfinder leer | Siehe „Nichts gefunden“ oben |
 | Plugin fehlt in JD | Dateien unter `…/jd/plugins/…` + Core-Patch |
-| Companion fehlt | Ordner `companion/chromium/` (entpackt) oder die signierte Firefox-XPI laden |
-| Firefox lehnt XPI ab | Braucht Mozilla-Signatur · oder temporär über `about:debugging` laden |
-| JD bei 0 B | AnkerGames-Tab offen lassen |
+| Companion fehlt | Entpackt laden → Ordner `companion/chromium/` |
 | Browser speichert die ZIP | Companion neu laden · `*.dlproxy.uk` nicht öffnen |
+| JD bei 0 B / Pipe failed | Companion neu laden, Tab offen lassen, erneut versuchen |
 
 </details>
