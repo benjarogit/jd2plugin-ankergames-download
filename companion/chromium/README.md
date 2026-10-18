@@ -1,9 +1,9 @@
 # JD Turnstile Companion (Chromium)
 
-Manual install:
+For Chrome, Vivaldi, Brave, and Edge.
 
-1. Open `chrome://extensions` / `vivaldi://extensions` / …
+1. Open `chrome://extensions` (or `vivaldi://` / `brave://` / `edge://extensions`)
 2. Enable Developer mode
-3. Load unpacked → this folder
+3. Load unpacked → this folder (`companion/chromium/`)
 
-See root README.md / README.de.md.
+Use the same browser JDownloader opens for captchas.
