@@ -7,7 +7,7 @@
 <p align="center">
   AnkerGames downloads that work in JDownloader<br/>
   Manual install · No MyJD · No AnkerGames login<br/>
-  Companion for Chromium browsers (Chrome, Vivaldi, Brave, Edge)
+  Companion: Chromium only (Chrome, Vivaldi, Brave, Edge) — no Firefox
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/benjarogit/jd2plugin-ankergames-download?style=flat-square&label=release" alt="Release" />
-  <img src="https://img.shields.io/badge/Chrome%20%7C%20Vivaldi%20%7C%20Brave%20%7C%20Edge-lightgrey?style=flat-square" alt="Browsers" />
+  <img src="https://img.shields.io/badge/Chromium_only-lightgrey?style=flat-square" alt="Chromium only" />
   · <a href="README.de.md">Deutsch</a>
 </p>
 
@@ -29,7 +29,9 @@
 ---
 
 [ankergames.net](https://ankergames.net) is behind Cloudflare. JD’s Java client gets blocked.  
-This package adds a **JD plugin** + **Chromium companion** so Turnstile runs in a real browser and the file streams to JD over localhost.
+This package adds a **JD plugin** + **browser companion** so Turnstile runs in a real browser and the file streams to JD over localhost.
+
+**Browser support right now: Chromium only** (Chrome, Vivaldi, Brave, Edge). Firefox is not included.
 
 > Unofficial — not affiliated with AppWork, JDownloader, or AnkerGames.
 

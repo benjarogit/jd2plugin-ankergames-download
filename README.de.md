@@ -7,7 +7,7 @@
 <p align="center">
   AnkerGames-Downloads, die in JDownloader laufen<br/>
   Manuelle Installation · Kein MyJD · Kein AnkerGames-Login<br/>
-  Companion für Chromium-Browser (Chrome, Vivaldi, Brave, Edge)
+  Companion: nur Chromium (Chrome, Vivaldi, Brave, Edge) — kein Firefox
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/benjarogit/jd2plugin-ankergames-download?style=flat-square&label=release" alt="Release" />
-  <img src="https://img.shields.io/badge/Chrome%20%7C%20Vivaldi%20%7C%20Brave%20%7C%20Edge-lightgrey?style=flat-square" alt="Browsers" />
+  <img src="https://img.shields.io/badge/nur_Chromium-lightgrey?style=flat-square" alt="nur Chromium" />
   · <a href="README.md">English</a>
 </p>
 
@@ -29,7 +29,9 @@
 ---
 
 [ankergames.net](https://ankergames.net) steckt hinter Cloudflare. Der Java-Client von JD wird blockiert.  
-Dieses Paket liefert **JD-Plugin** + **Chromium-Companion**: Turnstile im echten Browser, Datei per localhost an JD.
+Dieses Paket liefert **JD-Plugin** + **Browser-Companion**: Turnstile im echten Browser, Datei per localhost an JD.
+
+**Browser aktuell: nur Chromium** (Chrome, Vivaldi, Brave, Edge). Firefox gibt es nicht.
 
 > Inoffiziell — nicht verbunden mit AppWork, JDownloader oder AnkerGames.
 

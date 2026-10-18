@@ -1,23 +1,7 @@
-Hallo zusammen,
+Danke für die Antwort.
 
-zum [Declined]-Thread ankergames.net / Cloudflare: ich habe einen inoffiziellen Workaround gebaut und auf GitHub veröffentlicht.
+Ich hab selbst ein bisschen rumexperimentiert und einen Workaround gefunden. Den hab ich auf GitHub gestellt — wer Interesse hat:
 
-Kurz die Idee:
-- Cloudflare Turnstile läuft im echten Browser (Chrome / Vivaldi / Brave / Edge)
-- eine kleine Companion-Erweiterung holt die CDN-Datei mit Browser-TLS
-- JDownloader bekommt den Stream über einen localhost-Relay und speichert wie gewohnt
-
-Damit trifft der Java-HTTP-Client von JD nicht mehr auf die Cloudflare-WAF am CDN.
-
-Repo / Release 1.0.0:
 https://github.com/benjarogit/jd2plugin-ankergames-download
 
-Direkt-Download (Plugin + Core-Patch + Companion):
-https://github.com/benjarogit/jd2plugin-ankergames-download/releases/latest/download/ankergames-jd2-full.zip
-
-Installation und Hinweise stehen in der README (DE/EN). Kein MyJD, kein AnkerGames-Login — manuell, auf eigene Verantwortung.
-
-Das ist kein offizielles AppWork/JD-Plugin und auch nicht mit AnkerGames verbunden. Falls das jemandem hilft, freue ich mich über Feedback.
-
-Gruß
-Benny
+Bei mir im Test läuft’s. Über Feedback freue ich mich natürlich.
