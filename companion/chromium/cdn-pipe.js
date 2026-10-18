@@ -78,14 +78,11 @@
   function pipe(cdnUrl, relayBase) {
     setOverlayStatus("JD is downloading — keep this tab open until finished…");
     console.log("[JD Turnstile] tab CDN fetch", cdnUrl.slice(0, 70));
+    /* No Referer header — forbidden in fetch() and causes "Failed to fetch". */
     return fetch(cdnUrl, {
       credentials: "include",
       redirect: "follow",
-      cache: "no-store",
-      headers: {
-        Accept: "application/octet-stream,*/*;q=0.8",
-        Referer: "https://ankergames.net/"
-      }
+      cache: "no-store"
     }).then(function (cdnResp) {
       if (!cdnResp.ok) {
         throw new Error("CDN HTTP " + cdnResp.status);

@@ -354,14 +354,11 @@ function pipeCdnViaBackground(cdnUrl, relayBase) {
   const pushUrl = relayPushUrl(relayBase);
   console.log("[JD Turnstile] CDN fetch→relay (background)", cdnUrl.slice(0, 80));
 
+  /* Do NOT set Referer here — it is a forbidden fetch header and throws "Failed to fetch". */
   return fetch(cdnUrl, {
     credentials: "include",
     redirect: "follow",
-    cache: "no-store",
-    headers: {
-      Accept: "application/octet-stream,*/*;q=0.8",
-      Referer: "https://ankergames.net/"
-    }
+    cache: "no-store"
   }).then(function (cdnResp) {
     if (!cdnResp.ok) {
       throw new Error("CDN HTTP " + cdnResp.status);
@@ -613,29 +610,65 @@ function beginRelayTransfer(opts) {
  * bounce keep the AnkerGames tab alive (also friendlier for AMO auto-signing).
  */
 
-/** Safety net: if anything still queues a browser download from dlproxy, cancel it. */
+/** Cancel browser downloads of the CDN file so only JD receives the stream. */
+function killDownload(id, why) {
+  console.warn("[JD Turnstile] cancelling browser download", id, why || "");
+  api.downloads.cancel(id).catch(function () {});
+  setTimeout(function () {
+    api.downloads.erase({ id: id }).catch(function () {});
+  }, 200);
+  setTimeout(function () {
+    api.downloads.cancel(id).catch(function () {});
+    api.downloads.erase({ id: id }).catch(function () {});
+  }, 800);
+}
+
 function installDownloadGuard() {
   if (!api.downloads || !api.downloads.onCreated) {
     return;
   }
   try {
     api.downloads.onCreated.addListener(function (item) {
-      if (!item || !item.url || !DLPROXY_RE.test(item.url)) {
+      if (!item) {
         return;
       }
-      console.warn("[JD Turnstile] cancelling browser download", item.id, item.url.slice(0, 60));
-      const id = item.id;
-      api.downloads.cancel(id).catch(function () {});
-      setTimeout(function () {
-        api.downloads.erase({ id: id }).catch(function () {});
-      }, 250);
-      setTimeout(function () {
-        api.downloads.cancel(id).catch(function () {});
-        api.downloads.erase({ id: id }).catch(function () {});
-      }, 1000);
+      const url = String(item.url || item.finalUrl || "");
+      const name = String(item.filename || "");
+      const fromDlproxy = DLPROXY_RE.test(url);
+      const zipWhilePiping = !!(pipeSession && /\.zip$/i.test(name));
+      if (!fromDlproxy && !zipWhilePiping) {
+        return;
+      }
+      killDownload(item.id, (url || name).slice(0, 80));
     });
   } catch (e) {
     console.warn("[JD Turnstile] downloads guard unavailable", e);
+  }
+  if (api.downloads.onChanged) {
+    try {
+      api.downloads.onChanged.addListener(function (delta) {
+        if (!pipeSession || !delta || delta.id == null) {
+          return;
+        }
+        if (delta.state && delta.state.current === "in_progress") {
+          api.downloads
+            .search({ id: delta.id })
+            .then(function (items) {
+              const it = items && items[0];
+              if (!it) {
+                return;
+              }
+              const url = String(it.url || it.finalUrl || "");
+              if (DLPROXY_RE.test(url) || /\.zip$/i.test(String(it.filename || ""))) {
+                killDownload(delta.id, "onChanged");
+              }
+            })
+            .catch(function () {});
+        }
+      });
+    } catch (e2) {
+      /* ignore */
+    }
   }
 }
 installDownloadGuard();
@@ -656,16 +689,12 @@ function installDlproxyNavGuard() {
       if (!DLPROXY_RE.test(details.url || "")) {
         return;
       }
-      if (!pipeSession || pipeSession.workTabId !== details.tabId) {
-        return;
-      }
+      /* Always intercept dlproxy main-frame while companion is loaded — prefer hold page. */
+      const hold = api.runtime.getURL("hold.html");
       const back = lastAnkerUrlByTab[details.tabId];
-      if (!back) {
-        console.warn("[JD Turnstile] dlproxy nav during pipe — no AnkerGames URL to restore");
-        return;
-      }
-      console.warn("[JD Turnstile] bounce dlproxy → AnkerGames", details.tabId);
-      api.tabs.update(details.tabId, { url: back }).catch(function () {});
+      const target = back || hold;
+      console.warn("[JD Turnstile] bounce dlproxy →", target.slice(0, 80));
+      api.tabs.update(details.tabId, { url: target }).catch(function () {});
     });
   } catch (e) {
     console.warn("[JD Turnstile] webNavigation guard unavailable", e);
